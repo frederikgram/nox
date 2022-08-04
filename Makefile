@@ -1,9 +1,8 @@
-CC = gcc
-CFLAGS = -std=c11 -g -DDEBUG
-
-
+CC = g++
+CFLAGS = -g -DDEBUG -lstdc++ -lm 
+SRCS      = $(wildcard *.cpp)
 nothing: main.o lexer.o
-	gcc $(CFLAGS) main.c lexer.c -o nothing
+	g++ $(CFLAGS) $(SRCS) -o nothing 
 
 .PHONY: clean
 clean:
