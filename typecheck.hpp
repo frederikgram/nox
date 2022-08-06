@@ -29,6 +29,8 @@ struct VARIABLE
 {
     std::string name;
     enum VARIABLE_TYPE type;
+    std::vector<VARIABLE *> parameters;
+    enum VARIABLE_TYPE return_type;
     void *value;
 };
 
@@ -36,8 +38,9 @@ struct SCOPE
 {
     map<std::string, struct VARIABLE *> variables;
     struct SCOPE *parent;
+    int id;
 };
 
 struct AST_NODE *typecheck(struct AST_NODE *root);
 void check_block(struct AST_NODE *block);
-void check_function_block(struct AST_NODE *function_node);
+void check_function_block(struct AST_NODE *, struct VARIABLE *);

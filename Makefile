@@ -1,8 +1,8 @@
 CC = g++
-CFLAGS = -g -DDEBUG -lstdc++ -lm -w
+CFLAGS = -w -g -DDEBUG -lstdc++ -lm
 SRCS      = $(wildcard *.cpp)
 nothing: main.o lexer.o
-	g++ $(CFLAGS) $(SRCS) -o nothing 
+	g++ $(CFLAGS) $(SRCS) -o nothing
 
 .PHONY: clean
 clean:

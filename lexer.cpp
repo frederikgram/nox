@@ -102,26 +102,6 @@ struct TOKEN *lex(char *input, int size)
                 push(status, T_OR, "||", 2);
                 cursor += 2;
             }
-            if (strncmp("+=", input + cursor, 2) == 0)
-            {
-                push(status, T_AEQ, "||", 2);
-                cursor += 2;
-            }
-            if (strncmp("-=", input + cursor, 2) == 0)
-            {
-                push(status, T_SEQ, "||", 2);
-                cursor += 2;
-            }
-            if (strncmp("++", input + cursor, 2) == 0)
-            {
-                push(status, T_INC, "++", 2);
-                cursor += 2;
-            }
-            if (strncmp("--", input + cursor, 2) == 0)
-            {
-                push(status, T_DEC, "--", 2);
-                cursor += 2;
-            }
         }
 
         switch (input[cursor])
@@ -295,10 +275,17 @@ struct TOKEN *lex(char *input, int size)
                 push(status, T_PRINT, "print", 6);
                 break;
             }
+
             if (strncmp("return", input + cursor, 6) == 0)
             {
                 cursor += 5;
                 push(status, T_RETURN, "return", 6);
+                break;
+            }
+            if (strncmp("include", input + cursor, 7) == 0)
+            {
+                cursor += 6;
+                push(status, T_RETURN, "include", 7);
                 break;
             }
 
