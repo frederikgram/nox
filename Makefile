@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -g -DDEBUG -lstdc++ -lm 
+CFLAGS = -g -DDEBUG -lstdc++ -lm -w
 SRCS      = $(wildcard *.cpp)
 nothing: main.o lexer.o
 	g++ $(CFLAGS) $(SRCS) -o nothing 

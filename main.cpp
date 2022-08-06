@@ -2,6 +2,7 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "typecheck.hpp"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 
     struct TOKEN *head = lex(buffer, lSize);
     struct AST_NODE *tree = parse(buffer, lSize, head);
-
+    tree = typecheck(tree);
     fclose(fp);
     free(buffer);
 }

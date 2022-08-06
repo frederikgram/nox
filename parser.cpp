@@ -2,7 +2,6 @@
 
 #include "parser.hpp"
 #include "lexer.hpp"
-
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -279,25 +278,40 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
                              "Expected an identifier in funcion definition");
         }
 
-        // Parse Arguments
+        // Parse Parameter Declarations
         consume_assert(status, T_LPARENS,
                        "Expected '(' at the beginning of argument declarations in "
                        "function definition");
 
+        struct AST_NODE *vartype;
         struct AST_NODE *arg;
-        while ((arg = parse_argument(status, node)) != NULL)
+        while (status->current->type != T_RPARENS)
         {
-
-            if (arg->vartype == NULL)
+            vartype = parse_type(status, node);
+            arg = parse_identifier(status, node);
+            if (arg == NULL)
             {
                 print_error_exit(status->current->col, status->current->row,
-                                 "No type specified at function parameter declaration");
+                                 "Expected an identifier in argument declaration in "
+                                 "function definition");
             }
 
-            if (consume_if(status, T_COMMA) != 1)
+            if (vartype == NULL)
             {
-                break;
+                print_error_exit(status->current->col, status->current->row,
+                                 "Expected a type in argument declaration in "
+                                 "function definition");
             }
+
+            arg->vartype = vartype;
+            node->args.push_back(arg);
+
+            if (status->current->type == T_COMMA)
+            {
+                consume(status);
+                continue;
+            }
+            break;
         }
 
         consume_assert(status, T_RPARENS,
@@ -341,7 +355,6 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
     return node;
 }
-
 //@TODO : Not finished, add floats etc.
 struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
@@ -553,6 +566,7 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
         printf("parse_expression :: Function Call\n");
         consume(status);
         lhs->type == A_FUNC_CALL;
+        //@TODO : Use the same approach as used when parsing function definitions
         struct AST_NODE *arg;
         while ((arg = parse_argument(status, lhs)) != NULL)
         {
@@ -587,7 +601,7 @@ struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
 
     printf("/* BEGIN PARSING */\n");
 
-    status->root = parse_statement(status, NULL);
+    status->root = parse_block(status, NULL);
     printf("/* FINISHED PARSING */\n");
     return status->root;
 }

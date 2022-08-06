@@ -85,3 +85,5 @@ struct AST_NODE *make_node(struct PARSER_STATUS *status, enum AST_NODE_TYPE type
 struct AST_NODE *parse_inner(struct PARSER_STATUS *status, struct AST_NODE *parent);
 struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE *PARENT);
 struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *parent);
+void print_error(int col, int row, const char *message, ...);
+void print_error_exit(int col, int row, const char *message, ...);
