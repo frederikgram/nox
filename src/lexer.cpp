@@ -10,7 +10,7 @@
 
 using namespace std;
 // Create and append a new struct TOKEN to the linked-list of tokens.
-void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, char *value, int size)
+void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value, int size)
 {
     struct TOKEN *new_token = (struct TOKEN *)malloc(sizeof(struct TOKEN));
 
@@ -39,7 +39,7 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, char *value, int s
     }
 
 #if DEBUG
-    printf("lexer.c :: push :: %s\n", new_token->literal_value);
+    printf("Lexing\t::\tpush\t::\t%s\n", new_token->literal_value);
 #endif
 
     status->current_col += size;
@@ -106,11 +106,14 @@ struct TOKEN *lex(char *input, int size)
 
         switch (input[cursor])
         {
+            // @TODO : Gives the wrong column and row number, might be caused in utils.cpp
         case '\n':
             status->current_row++;
             status->current_col = 0;
             break;
         case '\t':
+            status->current_col += 4;
+            break;
         case '\v':
         case '\r':
         case ' ':

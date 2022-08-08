@@ -1,8 +1,8 @@
 /**/
 
-#include "typecheck.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "typecheck.hpp"
 #include <assert.h>
 #include <iostream>
 #include <math.h>
@@ -31,7 +31,7 @@ struct SCOPE *pop_scope()
     return scope;
 }
 
-enum VARIABLE_TYPE type_specifier_to_variable_type(enum AST_NODE_TYPE type)
+enum VARIABLE_TYPE_ENUM type_specifier_to_variable_type_enum(enum AST_NODE_TYPE type)
 {
     switch (type)
     {
@@ -41,12 +41,14 @@ enum VARIABLE_TYPE type_specifier_to_variable_type(enum AST_NODE_TYPE type)
         return V_CHARARACTER;
     case A_STRING:
         return V_STRING;
+    case A_ARRAY:
+        return V_ARRAY;
     default:
         return V_UNKNOWN;
     }
 }
 
-enum VARIABLE_TYPE ast_type_to_variable_type(enum AST_NODE_TYPE type)
+enum VARIABLE_TYPE_ENUM ast_type_to_variable_type_enum(enum AST_NODE_TYPE type)
 {
     switch (type)
     {
@@ -58,6 +60,8 @@ enum VARIABLE_TYPE ast_type_to_variable_type(enum AST_NODE_TYPE type)
         return V_STRING;
     case A_IDENTIFIER:
         return V_IDENTIFIER;
+    case A_ARRAY:
+        return V_ARRAY;
     case A_FUNC_DEF:
     case A_FUNC_CALL:
         return V_FUNCTION;
@@ -80,7 +84,7 @@ struct VARIABLE *find_variable(struct SCOPE *scope, std::string name)
     return NULL;
 }
 
-char *variable_type_to_string(enum VARIABLE_TYPE type)
+char *variable_enum_type_to_string(enum VARIABLE_TYPE_ENUM type)
 {
     switch (type)
     {
@@ -105,7 +109,7 @@ char *variable_type_to_string(enum VARIABLE_TYPE type)
     }
 }
 
-struct VARIABLE *push_variable(struct SCOPE *scope, std::string name, enum VARIABLE_TYPE type, void *value)
+struct VARIABLE *push_variable(struct SCOPE *scope, std::string name, struct VARIABLE_TYPE *type, void *value)
 {
 
     if (scope->variables.count(name) > 0)
@@ -142,6 +146,14 @@ int is_relational_operator(enum AST_NODE_TYPE type)
     }
 }
 
+struct VARIABLE_TYPE *make_simple_variable_type(enum VARIABLE_TYPE_ENUM type)
+{
+    struct VARIABLE_TYPE *variable_type = new struct VARIABLE_TYPE;
+    variable_type->type = type;
+    return variable_type;
+}
+
+// @TODO : Refactor to a switch statement
 int is_keyword(std::string name)
 {
 
@@ -154,15 +166,17 @@ int is_keyword(std::string name)
     return 0;
 }
 
-enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
+struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 {
     struct VARIABLE *var;
+    struct VARIABLE_TYPE *type;
 
     struct VARIABLE *lhs_var;
     struct VARIABLE *rhs_var;
-    enum VARIABLE_TYPE var_type;
-    enum VARIABLE_TYPE lhs_type;
-    enum VARIABLE_TYPE rhs_type;
+
+    struct VARIABLE_TYPE *lhs_type;
+    struct VARIABLE_TYPE *rhs_type;
+
     std::string var_name;
 
     switch (expr->type)
@@ -203,7 +217,9 @@ enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
 
         if (is_relational_operator(expr->type))
         {
-            return V_INTEGER;
+            type = new struct VARIABLE_TYPE;
+            type->type = V_INTEGER;
+            return type;
         }
 
         return lhs_type;
@@ -212,7 +228,7 @@ enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
     // Unary Expressions @TODO : Not yet implemented
     case A_NOT:
         lhs_type = check_expression(expr->lhs);
-        if (lhs_type != V_INTEGER)
+        if (lhs_type->type != V_INTEGER)
         {
             printf("Typechecking :: check_expression :: Unary Expression with LHS of non-integer type\n");
             exit(1);
@@ -229,7 +245,7 @@ enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
         // Check if function exists
         var_name = expr->token->literal_value;
         lhs_var = find_variable(NULL, var_name);
-        if (lhs_var == NULL || lhs_var->type != V_FUNCTION)
+        if (lhs_var == NULL || lhs_var->type->type != V_FUNCTION)
         {
             printf("Typechecking :: check_expression :: Function call to undefined function %s");
             exit(1);
@@ -256,7 +272,7 @@ enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
         }
 
         // @TODO : Check if function call has correct return type
-        return lhs_var->return_type;
+        return lhs_var->type;
         break;
 
     case A_IDENTIFIER:
@@ -273,7 +289,9 @@ enum VARIABLE_TYPE check_expression(struct AST_NODE *expr)
 
     // Currently this attempts to handle literals such as A_INTEGER etc.
     default:
-        return ast_type_to_variable_type(expr->type);
+        type = new struct VARIABLE_TYPE;
+        type->type = ast_type_to_variable_type_enum(expr->type);
+        return type;
     }
 }
 
@@ -283,8 +301,9 @@ void check_statement(struct AST_NODE *statement)
     printf("Typechecking :: check_statement\n");
 
     std::string name;
-    struct VARIABLE *tmp;
-    enum VARIABLE_TYPE tmpt;
+    struct VARIABLE *tmp_var;
+    struct VARIABLE_TYPE *tmp_type;
+    enum VARIABLE_TYPE_ENUM tmp_type_enum;
 
     switch (statement->type)
     {
@@ -319,8 +338,8 @@ void check_statement(struct AST_NODE *statement)
         }
 
         // Push function to current scope
-        tmp = push_variable(scopes.back(), name, V_FUNCTION, NULL);
-        tmp->return_type = type_specifier_to_variable_type(statement->vartype->type);
+        tmp_var = push_variable(scopes.back(), name, make_simple_variable_type(V_FUNCTION), NULL);
+        tmp_var->type->return_type = type_specifier_to_variable_type_enum(statement->vartype->type);
         // Check function body (This will create a new scope and automatically parse the arguments)
         check_function_block(statement, tmp);
         break;
@@ -356,7 +375,8 @@ void check_statement(struct AST_NODE *statement)
             printf("check_statement :: A_ASSIGN :: Variable Declaration :: Pushing var with name '%s' to scope '%d'\n",
                    statement->lhs->token->literal_value, scopes.back()->id);
 
-            tmp = push_variable(scopes.back(), name, type_specifier_to_variable_type(statement->vartype->type), NULL);
+            tmp = push_variable(scopes.back(), name, type_specifier_to_variable_type_enum(statement->vartype->type),
+                                NULL);
         }
         // This is a variable assignment, so we want to find it in the current scope.
         else
@@ -380,9 +400,8 @@ void check_statement(struct AST_NODE *statement)
         {
             // @TODO : This is a place where it could be interesting to use some Coercion helper methods if we
             // wanted to support implicit casting from e.g. int to float
-            enum VARIABLE_TYPE rhs_type = check_expression(statement->rhs);
-            enum VARIABLE_TYPE expected_type =
-                statement->vartype == NULL ? tmp->type : type_specifier_to_variable_type(statement->vartype->type);
+            struct VARIABLE_TYPE *rhs_type = check_expression(statement->rhs);
+            struct VARIABLE_TYPE *expected_type = tmp->type;
             if (expected_type != rhs_type)
             {
                 printf("Error: Variable '%s' is assigned a value of incorrect type \n",
@@ -406,7 +425,7 @@ void print_variables_in_scope(struct SCOPE *scope)
     for (auto var : scope->variables)
     {
 
-        std::cout << " | " << var.second->name << " : " << variable_type_to_string(var.second->type) << " "
+        std::cout << " | " << var.second->name << " : " << variable_enum_type_to_string(var.second->type) << " "
                   << std::endl;
     }
 }
@@ -427,7 +446,7 @@ void check_function_block(struct AST_NODE *function_node, struct VARIABLE *func_
     for (auto param : function_node->args)
     {
         name = param->token->literal_value;
-        var = push_variable(scopes.back(), name, type_specifier_to_variable_type(param->vartype->type), NULL);
+        var = push_variable(scopes.back(), name, type_specifier_to_variable_type_enum(param->vartype->type), NULL);
         func_var->parameters.push_back(var);
     }
 

@@ -13,25 +13,34 @@
 #include <vector>
 using namespace std;
 
-enum VARIABLE_TYPE
+enum VARIABLE_TYPE_ENUM
 {
     V_INTEGER,
-    V_CHARARACTER,
     V_STRING,
-    V_ARRAY, // Unused
-    V_FUNCTION,
-    V_VOID, // Unused
+    V_CHARACTER,
     V_UNKNOWN,
-    V_IDENTIFIER
+    V_IDENTIFIER,
+    V_FUNCTION,
+    V_ADDRESS,
+    V_POINTER,
+    V_ARRAY
+};
+
+struct VARIABLE_TYPE
+{
+    VARIABLE_TYPE_ENUM type;
+    int array_size = 0;
+    struct VARIABLE_TYPE *return_type;
+    struct VARIABLE_TYPE *array_type;
+    struct VARIABLE_TYPE *pointer_to;
 };
 
 struct VARIABLE
 {
-    std::string name;
-    enum VARIABLE_TYPE type;
-    std::vector<VARIABLE *> parameters;
-    enum VARIABLE_TYPE return_type;
     void *value;
+    struct VARIABLE_TYPE *type;
+    std::string name;
+    std::vector<VARIABLE *> parameters;
 };
 
 struct SCOPE
@@ -42,5 +51,4 @@ struct SCOPE
 };
 
 struct AST_NODE *typecheck(struct AST_NODE *root);
-void check_block(struct AST_NODE *block);
-void check_function_block(struct AST_NODE *, struct VARIABLE *);
+void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params);
