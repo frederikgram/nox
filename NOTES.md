@@ -1,0 +1,1 @@
+C++ Function Commenting Practices: https://stackoverflow.com/questions/1849991/best-practices-where-should-function-comments-go-in-c-c-code

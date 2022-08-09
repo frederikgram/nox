@@ -50,16 +50,14 @@ int consume_if(struct PARSER_STATUS *status, enum TOKEN_TYPE type)
 // Exit with flag -1 if status->current->type != the given TOKEN_TYPE type
 void consume_assert(struct PARSER_STATUS *status, enum TOKEN_TYPE type, const char *format, ...)
 {
-    if (consume_if(status, type) == 1)
+    if (consume_if(status, type) == 0)
     {
-        return;
+        va_list lst;
+        va_start(lst, format);
+        print_error(status->current->col, status->current->row, format, lst);
+        va_end(lst);
+        exit(-1);
     }
-
-    va_list lst;
-    va_start(lst, format);
-    print_error(status->current->col, status->current->row, format, lst);
-    va_end(lst);
-    exit(-1);
 }
 
 // Fetches a list of struct AST_NODE * statements and collects them inside an A_BLOCK node, pushing each statement to
@@ -82,44 +80,36 @@ struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *pare
 struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
 
-#ifdef DEBUG
-    printf("Parsing\t::\tparse_type\t::\tParsing Type\n");
-#endif
-    struct AST_NODE *type_node;
-    switch (status->current->type)
-    {
-    // Array Declaration
-    case T_LBRACKET: {
-        consume(status);
-        consume_assert(status, T_RBRACKET, "Expected ']' but received '%s'", status->current->literal_value);
-        type_node = make_node(status, A_ARRAY, parent);
-        type_node->vartype = parse_type(status, type_node);
-#ifdef DEBUG
-        printf("Parsing\t::\tparse_type\t::\tArray Declaration\t::\t%s\n", status->current->literal_value);
 
-        printf("Parsing\t::\tparse_type\t::\tArray Declaration\t::\t%s\n",
-               ast_node_type_to_string(type_node->vartype->type));
-#endif
-        break;
-    }
-        /* Pointers for the future
-        case T_STAR:
-            consume(status);
-            type_node = make_node(status, A_POINTER, parent);
-            type_node->vartype = parse_type(status, type_node);
-            break;
-        */
-    case T_INT:
-    case T_STR:
-    case T_CHAR: {
+    printf("Parsing\t::\tparse_type\t::\tParsing Type\n");
+
+    struct AST_NODE *type_node;
+    struct AST_NODE *array_node;
+  
+ 
+    if(status->current->type ==  T_INT || status->current->type == T_STR || status->current->type == T_CHAR)
+    {
         type_node = make_node(status, token_type_to_node_type(status->current->type), parent);
         consume(status);
-        type_node->vartype = parse_type(status, type_node);
+
+        while(status->current->type == T_LBRACKET) {
+
+            consume(status);
+            consume_assert(status, T_RBRACKET, "Expected ']' but received '%s'", status->current->literal_value);
+
+            printf("Parsing\t::parse_factor\t::\tFound array type\n");
+
+            array_node = make_node(status, A_ARR, parent);
+            type_node->parent = array_node;
+            array_node->vartype = type_node;
+            array_node->parent = parent;
+            type_node = array_node;
+        }
+
+
         return type_node;
     }
-    default:
-        return NULL;
-    }
+
 
     return type_node;
 }
@@ -141,9 +131,9 @@ struct AST_NODE *parse_assignment(struct PARSER_STATUS *status, struct AST_NODE 
 {
     struct AST_NODE *node = make_node(status, A_ASSIGN, parent);
 
-#ifdef DEBUG
+
     printf("Parsing Assignment Statement\n");
-#endif
+
     // (identifier): type = value
     lhs->parent = node;
     node->lhs = lhs;
@@ -171,9 +161,9 @@ struct AST_NODE *parse_assignment(struct PARSER_STATUS *status, struct AST_NODE 
 // Attempt to find either an identifier or a type-identifier pair
 struct AST_NODE *parse_argument(struct PARSER_STATUS *status, struct AST_NODE *node)
 {
-#ifdef DEBUG
+
     printf("Parsing Argument\n");
-#endif
+
 
     struct AST_NODE *tmp_type, *tmp_expr;
     tmp_type = parse_type(status, node);
@@ -196,9 +186,9 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
     case T_WHILE:
     case T_IF:
         node = make_node(status, status->current->type == T_IF ? A_IF : A_WHILE, parent);
-#ifdef DEBUG
+
         printf("Parsing if/while Statement\n");
-#endif
+
         consume(status);
         consume_assert(status, T_LPARENS, "Expected '(' at start of conditional");
 
@@ -217,29 +207,29 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
         return node; // Return to remove the ';' requirement for 'block' statements
     case T_LBRACE:   // Dangling block
-#ifdef DEBUG
+
         printf("Entering block parse\n");
-#endif
+
         node = parse_block(status, parent);
-#ifdef DEBUG
+
         printf("Exiting block parse\n");
-#endif
+
         return node; // Return to remove the ';' requirement for 'block' statements
 
     case T_PRINT:
         node = make_node(status, A_PRINT, parent);
         consume(status);
-#ifdef DEBUG
+
         printf("Parsing Print Statement\n");
-#endif
+
         node->lhs = parse_expression(status, node);
         break;
 
     case T_FUNC:
         node = make_node(status, A_FUNC_DEF, parent);
-#ifdef DEBUG
+
         printf("Parsing Function Definition Statement\n");
-#endif
+
         consume(status);
 
         // Parse Type
@@ -251,9 +241,9 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
         // Parse Function Name
         node->name = parse_identifier(status, node);
-#ifdef DEBUG
+
         printf("Parsing function def with name %s\n", node->name->token->literal_value);
-#endif
+
         if (node->name == NULL)
         {
             print_error_exit(status->current->col, status->current->row,
@@ -309,9 +299,9 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
     case T_RETURN:
         node = make_node(status, A_RETURN, parent);
-#ifdef DEBUG
+
         printf("Parsing\t::\tparse_statement\t::\tParsing Return Statement\n");
-#endif
+
         consume(status);
         node->lhs = parse_expression(status, node);
         break;
@@ -350,50 +340,54 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
 
     switch (status->current->type)
     {
+    // Expression is a (expr)
     case T_LPARENS:
         consume(status);
         node = parse_expression(status, parent);
         consume_assert(status, T_RPARENS, "Expected a ')' at the end of a '(expr)' ");
 
-#ifdef DEBUG
+
         printf("parse_factor\t::\tT_LPARENS\t::\t%c\n", status->current->value.charval);
-#endif
+
 
         return node; // we return instead of breaking as we need to perform
                      // 'consume_assert()' and breaking would only perform
                      // 'consume()'
 
+    // Expression is an array literal
+    case T_LBRACKET:
+        consume(status);
+        node = make_node(status, A_ARRAY, parent);
+        while (status->current->type != T_RBRACKET)
+        {
+            node->args.push_back(parse_expression(status, node));
+            if (status->current->type == T_COMMA)
+            {
+                consume(status);
+                continue;
+            }
+            break;
+        }
+        consume_assert(status, T_RBRACKET, "Expected a ']' at the end of an array literal");
+        node->vartype = node->args[0]; // @TODO : This seems weird, but it works...
+        return node;
+
     case T_STRING:
         node = make_node(status, A_STRING, parent);
-
-#ifdef DEBUG
         printf("parse_factor\t::\tT_char *\t::\t%s\n", status->current->value.strval);
-#endif
-
         break;
     case T_INTEGER:
         node = make_node(status, A_INTEGER, parent);
-
-#ifdef DEBUG
         printf("parse_factor\t::\tT_INTEGER\t::\t%d\n", status->current->value.intval);
-#endif
-
         break;
     case T_IDENTIFIER:
 
         // Expression is a function call
         if (status->current->next->type == T_LPARENS)
         {
-
-#ifdef DEBUG
             printf("parse_factor\t::\tFUNCTION_CALL\t::\t%s\n", status->current->literal_value);
-#endif
-
             node = make_node(status, A_FUNC_CALL, parent);
-
-#ifdef DEBUG
             printf("parse_expression\t::\tFunction Call\t::\t%s\n", status->current->literal_value);
-#endif
 
             struct AST_NODE *vartype;
             struct AST_NODE *arg;
@@ -427,20 +421,14 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
         // Expression is just a pure identifier
         else
         {
-
             node = make_node(status, A_IDENTIFIER, parent);
-
-#ifdef DEBUG
             printf("parse_factor\t::\tT_IDENTIFIER\t::\t%s\n", status->current->literal_value);
-#endif
         }
 
         break;
     case T_CHARACTER:
         node = make_node(status, A_CHARACTER, parent);
-#ifdef DEBUG
         printf("parse_factor\t::\tT_CHARACTER\t::\t%s\n", status->current->literal_value);
-#endif
         break;
     default:
         return NULL;
@@ -464,9 +452,9 @@ struct AST_NODE *parse_term(struct PARSER_STATUS *status, struct AST_NODE *paren
     {
         p = make_node(status, status->current->type == T_STAR ? A_MUL : A_DIV, NULL);
 
-#ifdef DEBUG
+
         printf("parse_term\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;
@@ -493,9 +481,9 @@ struct AST_NODE *parse_addititive(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, status->current->type == T_ADD ? A_ADD : A_SUB, NULL);
 
-#ifdef DEBUG
+
         printf("parse_addititive\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;
@@ -522,9 +510,9 @@ struct AST_NODE *parse_relational(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, token_type_to_node_type(status->current->type), NULL);
 
-#ifdef DEBUG
+
         printf("parse_relational\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;
@@ -551,9 +539,9 @@ struct AST_NODE *parse_logical_and(struct PARSER_STATUS *status, struct AST_NODE
     {
         p = make_node(status, A_LAND, NULL);
 
-#ifdef DEBUG
+
         printf("parse_logical_and\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;
@@ -580,9 +568,9 @@ struct AST_NODE *parse_logical_or(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, A_LOR, NULL);
 
-#ifdef DEBUG
+
         printf("parse_logical_or\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;
@@ -608,9 +596,9 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, A_ASSIGN, NULL);
 
-#ifdef DEBUG
+
         printf("parse_expression\t::\t%s\n", status->current->literal_value);
-#endif
+
 
         consume(status);
         lhs->parent = p;

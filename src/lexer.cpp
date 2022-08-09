@@ -121,7 +121,6 @@ struct TOKEN *lex(char *input, int size)
             break;
 
         case '/':
-
             // Start of comment '// foo bar'
             if (cursor + 1 <= size && input[cursor + 1] == '/')
             {

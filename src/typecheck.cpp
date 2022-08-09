@@ -34,20 +34,6 @@ struct SCOPE *pop_scope()
     return scope;
 }
 
-struct VARIABLE *find_variable(struct SCOPE *scope, std::string name)
-{
-
-    for (int i = scopes.size() - 1; i >= 0; i--)
-    {
-        if (auto var = scopes[i]->variables.find(name); var != scopes[i]->variables.end())
-        {
-            return var->second;
-        }
-    }
-
-    return NULL;
-}
-
 struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
 {
 
@@ -60,7 +46,7 @@ struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
 
     switch (node->type)
     {
-    case A_ARRAY:
+    case A_ARR:
         type->type = V_ARRAY;
         type->array_type = get_type_from_subtree(node->vartype);
         break;
@@ -91,11 +77,26 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
     {
         return 0;
     }
+    printf("Typechecking\t::\tget_type_from_subtree\t::\tComparing types %s and %s\n", variable_type_to_string(a), variable_type_to_string(b));
 
     return (a->type == b->type) && (are_equivalent_types(a->array_type, b->array_type)) &&
            (are_equivalent_types(a->pointer_to, b->pointer_to));
 }
 
+struct VARIABLE * find_variable(std::string name)
+{
+    for (int i = scopes.size() - 1; i >= 0; i--)
+    {
+        struct SCOPE *scope = scopes[i];
+        if (scope->variables.find(name) != scope->variables.end())
+        {
+            return scope->variables[name];
+        }
+    }
+    return NULL;
+}
+
+// @TODO : Placeholder logic for now
 struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 {
 
@@ -106,31 +107,37 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
 
-#ifdef DEBUG
+
     printf("Typechecking\t::\tcheck_expression\t::\tChecking Expression\n");
-#endif
+
 
     switch (expr->type)
     {
+    case A_ARRAY: {
+        struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
+        type->type = V_ARRAY;
+        type->array_type = check_expression(expr->vartype);
+        type->array_size = expr->args.size();
+        printf("Typechecking\t::\tcheck_expression\t::\tArray of type %s with size %d\n", variable_type_to_string(type->array_type), type->array_size);
+        return type;
+    }
     case A_INTEGER:
     case A_STRING:
     case A_CHARACTER:
-    case A_ARRAY:
-#ifdef DEBUG
+
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is a literal of type %s\n",
                ast_node_type_to_string(expr->type));
-#endif
+
         return get_type_from_subtree(expr);
+    default:break;
     }
 }
 
 void check_statement(struct AST_NODE *statement)
 {
 
-#ifdef DEBUG
     printf("Typechecking\t::\tcheck_statement\t::\tChecking statement of type %s\n",
            ast_node_type_to_string(statement->type));
-#endif
 
     switch (statement->type)
     {
@@ -151,10 +158,10 @@ void check_statement(struct AST_NODE *statement)
 
         function_type->type = V_FUNCTION;
         function_type->return_type = get_type_from_subtree(statement->vartype);
-#ifdef DEBUG
+
         printf("Typechecking\t::\tcheck_statement\t::\tFunction return type is %s\n",
                variable_type_to_string(function_type->return_type));
-#endif
+
 
         // Add parameters to function
         struct VARIABLE *tmp;
@@ -164,11 +171,10 @@ void check_statement(struct AST_NODE *statement)
             tmp->type = get_type_from_subtree(arg->vartype);
             tmp->name = arg->token->literal_value;
             function->parameters.push_back(tmp);
-#ifdef DEBUG
 
             printf("Typechecking\t::\tcheck_statement\t::\tFunction arg type is %s\n",
                    variable_type_to_string(tmp->type));
-#endif
+
         }
 
         // Add function to scope
@@ -182,29 +188,26 @@ void check_statement(struct AST_NODE *statement)
     }
 
     case A_RETURN: {
-#ifdef DEBUG
 
         printf("Typechecking\t::\tcheck_statement\t::\tChecking return statement\n");
-#endif
 
+        // Ensure that the return statement is inside a function
         if (functions.size() == 0)
         {
             print_error_exit(statement->token->col, statement->token->row,
                              "Typechecking\t::\tcheck_statement\t::\tReturn statement outside of function\n");
         }
-#ifdef DEBUG
 
         printf("Typechecking\t::\tcheck_statement\t::\tExpecting Return type %s\n",
                variable_type_to_string(functions.back()->type->return_type));
-#endif
 
+        // Get the return type of the expression we are returning
         struct VARIABLE_TYPE *return_type = check_expression(statement->lhs);
-#ifdef DEBUG
 
         printf("Typechecking\t::\tcheck_statement\t::\tReceived Return type %s\n",
                variable_type_to_string(return_type));
-#endif
 
+        // Ensure that the return type matches the function return type
         if (are_equivalent_types(functions.back()->type->return_type, return_type) == 0)
         {
             print_error_exit(
@@ -212,27 +215,88 @@ void check_statement(struct AST_NODE *statement)
                 "Typechecking\t::\tcheck_statement\t::\tReturn type does not match function return type\n");
         }
     }
-    }
+
+    // Binary Expression (Non-Relational)
+    case A_ADD:
+    case A_SUB:
+    case A_MUL:
+    case A_DIV:
+    case A_LAND:
+    case A_LOR:
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking binary expression\n");
+        break;
+
+    case A_LESS:
+    case A_GREAT:
+    case A_LEQ:
+    case A_GEQ:
+    case A_EQ:
+    case A_NEQ:
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking relational expression\n");
+        break;
+
+    case A_ASSIGN: {
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking Assignment\n");
+
+        // Check that the variable exists
+        struct VARIABLE * lhs = find_variable(statement->lhs->token->literal_value);
+        if(lhs == NULL)
+        {
+            if(statement->vartype == NULL) {
+            print_error_exit(statement->token->col, statement->token->row,
+                             "Typechecking\t::\tcheck_statement\t::\tVariable %s not found\n",
+                             statement->lhs->token->literal_value);
+            } else {
+                // Create new variable
+                lhs = new struct VARIABLE;
+                lhs->name = statement->lhs->token->literal_value;
+                lhs->type = get_type_from_subtree(statement->vartype);
+                scopes.back()->variables[lhs->name] = lhs;
+            }
+        }
+
+        // Statement was purely a variable declaration
+        if(statement->rhs == NULL) {
+            break;
+        }
+        // Statement attempts to assign a value to a variable
+
+        // Get type of RHS expression
+        struct VARIABLE_TYPE *rhs = check_expression(statement->rhs);
+        if(rhs == NULL) {
+            printf("eeeeeeeeeeeeee\n");
+        }
+
+        // If the types are not equivalent, throw an error
+        if(are_equivalent_types(lhs->type, rhs) == 0)
+        {
+            printf("Typechecking\t::\tcheck_statement\t::\tVariable '%s' is of type %s, cannot assign value of type %s\n", lhs->name.c_str(), variable_type_to_string(lhs->type), variable_type_to_string(rhs));
+            exit(-1);
+        }
+
+
+        break;
+    }}
 }
 
 void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 {
-#ifdef DEBUG
+
 
     printf("Typechecking\t::\tcheck_block\t::\tChecking block\n");
-#endif
+
 
     push_scope();
 
     if (params.size() > 0)
     {
-#ifdef DEBUG
+
         printf("Typechecking\t::\tcheck_block\t::\tInjecting %d variables into scope\n", params.size());
-#endif
+
         for (auto *param : params)
         {
 
-            // push_variable(scopes.back(), param->name, NULL, param->value);
+            // @TODO : push_variable(scopes.back(), param->name, NULL, param->value);
         }
     }
 
@@ -242,9 +306,9 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
     }
 
     pop_scope();
-#ifdef DEBUG
+
     printf("Typechecking\t::\tcheck_block\t::\tExiting block\n");
-#endif
+
 }
 
 struct AST_NODE *typecheck(struct AST_NODE *root)

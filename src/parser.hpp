@@ -35,6 +35,7 @@ enum AST_NODE_TYPE
     A_INPUT,
     A_PRINT,
     A_WHILE,
+    A_ARR,
     A_ASSIGN,
     A_MEMBER,
     A_RETURN,

@@ -65,6 +65,10 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
     {
     case A_ADD:
         return "A_ADD";
+    case A_ARR:
+        return "A_ARR";
+    case A_ARRAY:
+        return "A_ARRAY";
     case A_SUB:
         return "A_SUB";
     case A_MUL:
@@ -107,6 +111,11 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
 
 char *variable_type_to_string(struct VARIABLE_TYPE *type)
 {
+
+    if(type == NULL || type->type == NULL) {
+        return "utils\t::\tvariable_type_to_string\t::\tNULL";
+    }
+
     switch (type->type)
     {
     case V_INTEGER:
@@ -126,9 +135,7 @@ char *variable_type_to_string(struct VARIABLE_TYPE *type)
     case V_IDENTIFIER:
         return "V_IDENTIFIER";
     default: {
-        char *str = (char *)malloc(100);
-        sprintf(str, "Unknown VARIABLE_TYPE_ENUM %d", type->type);
-        return str;
+        return "Unknown var type";
     }
     }
 }
