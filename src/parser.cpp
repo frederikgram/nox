@@ -80,18 +80,17 @@ struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *pare
 struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
 
-
     printf("Parsing\t::\tparse_type\t::\tParsing Type\n");
 
     struct AST_NODE *type_node;
     struct AST_NODE *array_node;
-  
  
     if(status->current->type ==  T_INT || status->current->type == T_STR || status->current->type == T_CHAR)
     {
         type_node = make_node(status, token_type_to_node_type(status->current->type), parent);
         consume(status);
 
+        // Parse Array Types
         while(status->current->type == T_LBRACKET) {
 
             consume(status);
@@ -105,12 +104,7 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
             array_node->parent = parent;
             type_node = array_node;
         }
-
-
-        return type_node;
     }
-
-
     return type_node;
 }
 // Creates an AST_NODE * of type A_IDENTIFIER if the status->current is a T_IDENTIFIER, if one was found, we consume it.
@@ -305,9 +299,6 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         consume(status);
         node->lhs = parse_expression(status, node);
         break;
-
-    case T_USE:
-        break; // @TODO : Gotta write a function that reads the input, parses all its functions, variables and Use's
 
     default: // Defaults to expression, returns NULL if no valid expression could be constructed
         node = parse_expression(status, parent);

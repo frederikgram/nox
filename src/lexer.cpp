@@ -7,18 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <vector>
+#include <map>
 
 using namespace std;
+
 // Create and append a new struct TOKEN to the linked-list of tokens.
 void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value, int size)
 {
-    struct TOKEN *new_token = (struct TOKEN *)malloc(sizeof(struct TOKEN));
+    struct TOKEN *new_token = (struct TOKEN *)calloc(1,sizeof(struct TOKEN));
 
     new_token->type = token;
     new_token->row = status->current_row;
 
     // literal_value contains the value without being cast to it's proper type such as int or char.
-    new_token->literal_value = (char *)malloc(size);
+    new_token->literal_value = (char *)calloc(1, size);
     strcpy(new_token->literal_value, value);
 
     if (token == T_INTEGER)
@@ -28,7 +31,7 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value,
     }
     else if (size > 1)
     {
-        new_token->value.strval = (char *)malloc(size);
+        new_token->value.strval = (char *)calloc(1, size);
         strncpy(new_token->value.strval, value, size);
         new_token->col = status->current_col;
     }
@@ -58,9 +61,22 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value,
     }
 }
 
+std::map<std::string, enum TOKEN_TYPE> keywords = {
+    {"if",T_IF},
+    {"int",T_INT},
+    {"str",T_STR},
+    {"char",T_CHAR} ,
+    {"func",T_FUNC} ,
+    {"else",T_ELSE} ,
+    {"input",T_INPUT},
+    {"while",T_WHILE},
+    {"print",T_PRINT},
+    {"return", T_RETURN},
+};
+
 struct TOKEN *lex(char *input, int size)
 {
-    struct LEXER_STATUS *status = (struct LEXER_STATUS *)malloc(sizeof(struct LEXER_STATUS));
+    struct LEXER_STATUS *status = (struct LEXER_STATUS *)calloc(1,sizeof(struct LEXER_STATUS));
 
     int segment_size = 0;
     int cursor = 0;
@@ -204,7 +220,7 @@ struct TOKEN *lex(char *input, int size)
             {
                 segment_size++;
             }
-            buffer = (char *)malloc(segment_size + 2);
+            buffer = (char *)calloc(1,segment_size + 2);
             buffer[segment_size + 2] = '\0';
             memcpy(buffer, input + cursor - segment_size - 1, segment_size + 2);
             push(status, T_STRING, buffer, segment_size + 2);
@@ -212,7 +228,7 @@ struct TOKEN *lex(char *input, int size)
             break;
 
         case '\'': // Character Literal
-            buffer = (char *)malloc(4);
+            buffer = (char *)calloc(1,4);
             buffer[3] = '\0';
             memcpy(buffer, input + cursor, 3);
             push(status, T_CHARACTER, buffer, 3);
@@ -220,76 +236,6 @@ struct TOKEN *lex(char *input, int size)
             break;
 
         default:
-
-            // Check for keywords @NOTE : we subtract one from the lenght of the keyword since when we break we
-            // increment our cursor by one automatically, meaning that we'd go out-of-bounds if we didn't subtract.
-            if (strncmp("if", input + cursor, 2) == 0)
-            {
-                cursor += 1;
-                push(status, T_IF, "if", 2);
-                break;
-            }
-            if (strncmp("int", input + cursor, 3) == 0)
-            {
-                cursor += 2;
-                push(status, T_INT, "int", 3);
-                break;
-            }
-            if (strncmp("str", input + cursor, 3) == 0)
-            {
-                cursor += 2;
-                push(status, T_STR, "str", 3);
-                break;
-            }
-            if (strncmp("char", input + cursor, 4) == 0)
-            {
-                cursor += 3;
-                push(status, T_CHAR, "char", 4);
-                break;
-            }
-            if (strncmp("func", input + cursor, 4) == 0)
-            {
-                cursor += 3;
-                push(status, T_FUNC, "func", 4);
-                break;
-            }
-            if (strncmp("else", input + cursor, 4) == 0)
-            {
-                cursor += 3;
-                push(status, T_ELSE, "else", 4);
-                break;
-            }
-            if (strncmp("input", input + cursor, 5) == 0)
-            {
-                cursor += 4;
-                push(status, T_INPUT, "input", 5);
-                break;
-            }
-            if (strncmp("while", input + cursor, 5) == 0)
-            {
-                cursor += 4;
-                push(status, T_WHILE, "while", 5);
-                break;
-            }
-            if (strncmp("print", input + cursor, 6) == 0)
-            {
-                cursor += 5;
-                push(status, T_PRINT, "print", 6);
-                break;
-            }
-
-            if (strncmp("return", input + cursor, 6) == 0)
-            {
-                cursor += 5;
-                push(status, T_RETURN, "return", 6);
-                break;
-            }
-            if (strncmp("include", input + cursor, 7) == 0)
-            {
-                cursor += 6;
-                push(status, T_RETURN, "include", 7);
-                break;
-            }
 
             // Check for integers @TODO : Add floating point numbers
             while (isdigit(input[cursor]) == 1)
@@ -300,7 +246,7 @@ struct TOKEN *lex(char *input, int size)
 
             if (segment_size > 0)
             {
-                buffer = (char *)malloc(segment_size + 1);
+                buffer = (char *)calloc(1,segment_size + 1);
                 buffer[segment_size] = '\0';
                 memcpy(buffer, input + cursor - segment_size, segment_size);
                 push(status, T_INTEGER, buffer, segment_size);
@@ -309,7 +255,7 @@ struct TOKEN *lex(char *input, int size)
                 break;
             }
 
-            // Check for Identifier
+            // Check for Identifiers and Keywords
             while ((segment_size > 0 && input[cursor] >= 48 && input[cursor] <= 57) ||
                    (input[cursor] >= 65 && input[cursor] <= 90) || (input[cursor] >= 97 && input[cursor] <= 122) ||
                    input[cursor] == 95)
@@ -318,13 +264,26 @@ struct TOKEN *lex(char *input, int size)
                 cursor++;
             }
 
-            // Found an Identifier
+            // Found an Identifier or Keyword
             if (segment_size > 0)
             {
-                buffer = (char *)malloc(segment_size + 1);
+
+                buffer = (char *)calloc(1,segment_size + 1);
                 buffer[segment_size] = '\0';
                 memcpy(buffer, input + cursor - segment_size, segment_size);
-                push(status, T_IDENTIFIER, buffer, segment_size);
+
+
+                // Check if it's a keyword
+                if(keywords.find(buffer) != keywords.end())
+                {
+                    push(status, keywords[buffer], buffer, segment_size);
+                }
+                // It's an identifier
+                else
+                {
+                    push(status, T_IDENTIFIER, buffer, segment_size);
+                }
+                
                 segment_size = 0;
                 cursor--;
                 break;

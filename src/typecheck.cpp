@@ -1,5 +1,3 @@
-/**/
-
 #include "typecheck.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
@@ -36,37 +34,47 @@ struct SCOPE *pop_scope()
 
 struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
 {
-
-    if (node == NULL)
-    {
-        return NULL;
-    }
-
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
 
     switch (node->type)
     {
+    case A_ARRAY:
     case A_ARR:
         type->type = V_ARRAY;
         type->array_type = get_type_from_subtree(node->vartype);
-        break;
+        return type;
+    case A_INTEGER:
     case A_INT:
         type->type = V_INTEGER;
-        break;
+        return type;
+    case A_CHARACTER:
     case A_CHAR:
         type->type = V_CHARACTER;
-        break;
+        return type;
     case A_STRING:
+    case A_STR:
         type->type = V_STRING;
-        break;
-    default:
-        type->type = ast_type_to_variable_type_enum(node->type);
-        break;
+        return type;
+    default: 
+        printf("Unknown type at get_type_from_subtree in typecheck.cpp :: received token '%s'\n", node->token->literal_value);
+        exit(-1);
     }
 
-    return type;
 }
 
+int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
+{
+    if (type1->type == V_INTEGER && type2->type == V_INTEGER)
+        return 1;
+    else if (type1->type == V_CHARACTER && type2->type == V_CHARACTER)
+        return 1;
+    else if (type1->type == V_STRING && type2->type == V_STRING)
+        return 1;
+    else if((type1->type == V_INTEGER && type2->type == V_CHARACTER) || (type1->type == V_CHARACTER && type2->type == V_INTEGER))
+        return 1;
+    else
+        return 0;
+}
 int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
 {
     if (a == NULL && b == NULL)
@@ -77,6 +85,7 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
     {
         return 0;
     }
+
     printf("Typechecking\t::\tget_type_from_subtree\t::\tComparing types %s and %s\n", variable_type_to_string(a), variable_type_to_string(b));
 
     return (a->type == b->type) && (are_equivalent_types(a->array_type, b->array_type)) &&
@@ -99,17 +108,8 @@ struct VARIABLE * find_variable(std::string name)
 // @TODO : Placeholder logic for now
 struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 {
-
-    if (expr == NULL)
-    {
-        return NULL;
-    }
-
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
-
-
     printf("Typechecking\t::\tcheck_expression\t::\tChecking Expression\n");
-
 
     switch (expr->type)
     {
@@ -124,12 +124,33 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
     case A_INTEGER:
     case A_STRING:
     case A_CHARACTER:
-
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is a literal of type %s\n",
                ast_node_type_to_string(expr->type));
 
         return get_type_from_subtree(expr);
-    default:break;
+    case A_FUNC_CALL: {
+        printf("Typechecking\t::\tcheck_expression\t::\tExpression is a function call\n");
+        struct VARIABLE *func = find_variable(expr->token->literal_value);
+        if (func == NULL)
+        {
+            printf("Typechecking\t::\tcheck_expression\t::\tFunction %s not found\n", expr->token->literal_value);
+            exit(-1);
+        }
+        printf("Typechecking\t::\tcheck_expression\t::\tFunction '%s' found\n", expr->token->literal_value);
+        return func->type->return_type;
+    }
+    case A_ADD:
+    case A_SUB:
+    case A_MUL:
+    case A_DIV:
+    case A_MOD: {
+        printf("Typechecking\t::\tcheck_expression\t::\tExpression is a binary operation\n");
+
+    }
+
+    default:
+        printf("Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
+        exit(-1);
     }
 }
 
@@ -141,11 +162,9 @@ void check_statement(struct AST_NODE *statement)
 
     switch (statement->type)
     {
-
     case A_BLOCK:
         check_block(statement, {});
         break;
-
     case A_FUNC_DEF: {
 
         // Build Function Variable
@@ -154,14 +173,9 @@ void check_statement(struct AST_NODE *statement)
 
         // Fetch information type of function
         struct VARIABLE_TYPE *function_type = new struct VARIABLE_TYPE;
-        function->type = function_type;
-
         function_type->type = V_FUNCTION;
         function_type->return_type = get_type_from_subtree(statement->vartype);
-
-        printf("Typechecking\t::\tcheck_statement\t::\tFunction return type is %s\n",
-               variable_type_to_string(function_type->return_type));
-
+        function->type = function_type;
 
         // Add parameters to function
         struct VARIABLE *tmp;
@@ -189,6 +203,7 @@ void check_statement(struct AST_NODE *statement)
 
     case A_RETURN: {
 
+
         printf("Typechecking\t::\tcheck_statement\t::\tChecking return statement\n");
 
         // Ensure that the return statement is inside a function
@@ -197,6 +212,7 @@ void check_statement(struct AST_NODE *statement)
             print_error_exit(statement->token->col, statement->token->row,
                              "Typechecking\t::\tcheck_statement\t::\tReturn statement outside of function\n");
         }
+
 
         printf("Typechecking\t::\tcheck_statement\t::\tExpecting Return type %s\n",
                variable_type_to_string(functions.back()->type->return_type));
@@ -216,25 +232,67 @@ void check_statement(struct AST_NODE *statement)
         }
     }
 
-    // Binary Expression (Non-Relational)
     case A_ADD:
     case A_SUB:
     case A_MUL:
     case A_DIV:
     case A_LAND:
-    case A_LOR:
-        printf("Typechecking\t::\tcheck_statement\t::\tChecking binary expression\n");
-        break;
+    case A_LOR: {
+        // Only allow integers, floats, chars, and sometimes strings (for concat) 
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking binary operation %s\n",
+               ast_node_type_to_string(statement->type));
 
+        struct VARIABLE_TYPE *lhs = check_expression(statement->lhs);
+        struct VARIABLE_TYPE *rhs = check_expression(statement->rhs);
+
+        //@TODO : This is a placeholder for now
+        if(are_equivalent_types(lhs, rhs) == 0)
+        {
+            print_error_exit(
+                statement->token->col, statement->token->row,
+                "Typechecking\t::\tcheck_statement\t::\tBinary operation %s requires operands of same type\n",
+                ast_node_type_to_string(statement->type));
+        }
+        break;
+    }
     case A_LESS:
     case A_GREAT:
     case A_LEQ:
-    case A_GEQ:
-    case A_EQ:
-    case A_NEQ:
-        printf("Typechecking\t::\tcheck_statement\t::\tChecking relational expression\n");
+    case A_GEQ: {
+        // Only allow relational operators on integers, characters, and floats.
+
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking relational operation %s\n",
+               ast_node_type_to_string(statement->type));
+
+        struct VARIABLE_TYPE *lhs = check_expression(statement->lhs);
+        struct VARIABLE_TYPE *rhs = check_expression(statement->rhs);
+        if(are_relationally_comparable(lhs, rhs) == 0) {
+            print_error_exit(statement->token->col, statement->token->row,
+                             "Typechecking\t::\tcheck_statement\t::\tRelational operator used on non-comparable types\n");
+        }
+
         break;
 
+    }
+
+    case A_EQ:
+    case A_NEQ: {
+         // Allow strict equality checks on all types 
+
+        printf("Typechecking\t::\tcheck_statement\t::\tChecking equality operation %s\n",
+               ast_node_type_to_string(statement->type));
+
+        struct VARIABLE_TYPE *lhs = check_expression(statement->lhs);
+        struct VARIABLE_TYPE *rhs = check_expression(statement->rhs);
+
+        //@TODO : Update for compound types
+        if(are_equivalent_types(lhs, rhs) == 0) {
+            print_error_exit(statement->token->col, statement->token->row,
+                             "Typechecking\t::\tcheck_statement\t::\tEquality operator used on non-equivalent types\n");
+        }
+
+        break;
+    }
     case A_ASSIGN: {
         printf("Typechecking\t::\tcheck_statement\t::\tChecking Assignment\n");
 
@@ -256,16 +314,11 @@ void check_statement(struct AST_NODE *statement)
         }
 
         // Statement was purely a variable declaration
-        if(statement->rhs == NULL) {
-            break;
-        }
-        // Statement attempts to assign a value to a variable
+        if(statement->rhs == NULL) { break; }
 
+        // Statement attempts to assign a value to a variable
         // Get type of RHS expression
         struct VARIABLE_TYPE *rhs = check_expression(statement->rhs);
-        if(rhs == NULL) {
-            printf("eeeeeeeeeeeeee\n");
-        }
 
         // If the types are not equivalent, throw an error
         if(are_equivalent_types(lhs->type, rhs) == 0)
@@ -273,11 +326,11 @@ void check_statement(struct AST_NODE *statement)
             printf("Typechecking\t::\tcheck_statement\t::\tVariable '%s' is of type %s, cannot assign value of type %s\n", lhs->name.c_str(), variable_type_to_string(lhs->type), variable_type_to_string(rhs));
             exit(-1);
         }
-
-
         break;
-    }}
+    }
+    }
 }
+
 
 void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 {
@@ -295,8 +348,7 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 
         for (auto *param : params)
         {
-
-            // @TODO : push_variable(scopes.back(), param->name, NULL, param->value);
+            scopes.back()->variables[param->name] = param;
         }
     }
 

@@ -22,6 +22,7 @@ enum AST_NODE_TYPE
     A_NEQ,
     A_NOT,
     A_STR,
+    A_MOD,
     A_SUB,
     A_USE,
     A_CHAR,

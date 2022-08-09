@@ -52,6 +52,10 @@ enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
         return A_STR;
     case T_CHAR:
         return A_CHAR;
+    case T_INTEGER:
+        return A_INTEGER;
+    case T_STRING: 
+        return A_STRING;
     default:
         break;
     }
@@ -101,6 +105,15 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_PRINT";
     case A_INPUT:
         return "A_INPUT";
+    case A_EMPTY:
+        return "A_EMPTY";
+    case A_INT:
+        return "A_INT";
+    case A_STR: 
+        return "A_STR";
+    case A_CHAR:
+        return "A_CHAR";
+    
     default: {
         char *str = (char *)malloc(100);
         sprintf(str, "Unknown AST_NODE_TYPE %d", type);
@@ -111,10 +124,6 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
 
 char *variable_type_to_string(struct VARIABLE_TYPE *type)
 {
-
-    if(type == NULL || type->type == NULL) {
-        return "utils\t::\tvariable_type_to_string\t::\tNULL";
-    }
 
     switch (type->type)
     {
@@ -135,9 +144,12 @@ char *variable_type_to_string(struct VARIABLE_TYPE *type)
     case V_IDENTIFIER:
         return "V_IDENTIFIER";
     default: {
-        return "Unknown var type";
+        break;
     }
     }
+
+    printf("variable_type_to_string :: Massing Case\n");
+    exit(-1);
 }
 
 enum VARIABLE_TYPE_ENUM ast_type_to_variable_type_enum(enum AST_NODE_TYPE type)

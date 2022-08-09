@@ -22,7 +22,6 @@ enum TOKEN_TYPE
     T_DIV,
     T_DOT,
     T_NEQ,
-    T_USE,
     T_LESS,
     T_PIPE,
     T_BANG,
