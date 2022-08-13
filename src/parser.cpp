@@ -454,20 +454,15 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
 struct AST_NODE *parse_term(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
     struct AST_NODE *lhs = parse_factor(status, NULL);
-    if (lhs == NULL)
-    {
-        return NULL;
-    }
+    if (lhs == NULL){return NULL;}
 
     struct AST_NODE *p;
 
-    while (status->current->type == T_STAR || status->current->type == T_DIV)
+    while (status->current->type == T_STAR || status->current->type == T_DIV || status->current->type == T_MOD)
     {
-        p = make_node(status, status->current->type == T_STAR ? A_MUL : A_DIV, NULL);
-
+        p = make_node(status, token_type_to_node_type(status->current->type), NULL);
 
         printf("parse_term\t::\t%s\n", status->current->literal_value);
-
 
         consume(status);
         lhs->parent = p;
@@ -583,7 +578,6 @@ struct AST_NODE *parse_logical_or(struct PARSER_STATUS *status, struct AST_NODE 
 
 
         printf("parse_logical_or\t::\t%s\n", status->current->literal_value);
-
 
         consume(status);
         lhs->parent = p;

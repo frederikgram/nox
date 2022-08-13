@@ -15,7 +15,6 @@ using namespace std;
 
 vector<struct SCOPE *> scopes;
 vector<struct VARIABLE *> functions;
-
 int scope_id = 0;
 
 void push_scope()
@@ -65,7 +64,6 @@ struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
     }
 
 }
-
 int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
 {
   
@@ -194,7 +192,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 
         return lhs;
     }
-
     case A_GREAT:
     case A_LESS:
     case A_GEQ:
@@ -221,7 +218,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         }
 
         return lhs;
-}
+    }
     case A_IDENTIFIER: {
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is an identifier\n");
         struct VARIABLE *var = find_variable(expr->token->literal_value);
@@ -233,7 +230,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         printf("Typechecking\t::\tcheck_expression\t::\tVariable '%s' found\n", expr->token->literal_value);
         return var->type;
     }
-
     default:
         printf("Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
         exit(-1);
@@ -242,7 +238,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 
 void check_statement(struct AST_NODE *statement)
 {
-
     printf("Typechecking\t::\tcheck_statement\t::\tChecking statement of type %s\n",
            ast_node_type_to_string(statement->type));
 
@@ -251,10 +246,9 @@ void check_statement(struct AST_NODE *statement)
     case A_BLOCK:
         check_block(statement, {});
         break;
-        
+
     case A_WHILE:
     case A_IF: {
-
         // Ensure that the conditional expression is of type integer
         if (check_expression(statement->conditional)->type != V_INTEGER)
         {
@@ -277,7 +271,7 @@ void check_statement(struct AST_NODE *statement)
         }
 
         break;
-}
+    }
     case A_FUNC_DEF: {
 
         // Build Function Variable
@@ -301,7 +295,6 @@ void check_statement(struct AST_NODE *statement)
 
             printf("Typechecking\t::\tcheck_statement\t::\tFunction arg type is %s\n",
                    variable_type_to_string(tmp->type));
-
         }
 
         // Add function to scope
@@ -313,9 +306,7 @@ void check_statement(struct AST_NODE *statement)
         functions.pop_back();
         break;
     }
-
     case A_RETURN: {
-
 
         printf("Typechecking\t::\tcheck_statement\t::\tChecking return statement\n");
 
@@ -325,7 +316,6 @@ void check_statement(struct AST_NODE *statement)
             print_error_exit(statement->token->col, statement->token->row,
                              "Typechecking\t::\tcheck_statement\t::\tReturn statement outside of function\n");
         }
-
 
         printf("Typechecking\t::\tcheck_statement\t::\tExpecting Return type %s\n",
                variable_type_to_string(functions.back()->type->return_type));
@@ -374,7 +364,6 @@ void check_statement(struct AST_NODE *statement)
                 scopes.back()->variables[lhs->name] = lhs;
             }
         }
-
         // Statement was purely a variable declaration
         if(statement->rhs == NULL) { break; }
 
@@ -391,12 +380,14 @@ void check_statement(struct AST_NODE *statement)
         break;
     }
 
+    // @TODO : Input statement
+
     default: check_expression(statement);break;
 
     }
 }
 
-
+// Checks a block of statements, creating a new scope if necessary
 void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 {
 

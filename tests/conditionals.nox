@@ -8,3 +8,9 @@ if(a<b){
 } else {
     print("a is greater than b");
 }
+
+if(5%2==1) {
+    print("5 is odd");
+} else {
+    print("5 is even");
+}

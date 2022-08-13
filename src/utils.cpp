@@ -27,6 +27,7 @@ void print_error_exit(int col, int row, const char *message, ...)
     exit(-1);
 }
 
+
 // Converts _some_ enum TOKEN_TYPE's to enum AST_NODE_TYPE's
 enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
 {
@@ -42,10 +43,18 @@ enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
         return A_GREAT;
     case T_GEQ:
         return A_GEQ;
+    case T_MOD:
+        return A_MOD;   
     case T_LEQ:
         return A_LEQ;
+    case T_DIV:
+        return A_DIV;
+    case T_ADD:
+        return A_ADD;
     case T_EQ:
         return A_EQ;
+    case T_STAR:
+        return A_MUL; //@TODO : Fix this when adding deref
     case T_NEQ:
         return A_NEQ;
     case T_INT:
@@ -107,8 +116,6 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_WHILE";
     case A_PRINT:
         return "A_PRINT";
-    case A_INPUT:
-        return "A_INPUT";
     case A_EMPTY:
         return "A_EMPTY";
     case A_INT:
@@ -150,12 +157,12 @@ char *variable_type_to_string(struct VARIABLE_TYPE *type)
     case V_IDENTIFIER:
         return "V_IDENTIFIER";
     default: {
-        break;
+        printf("variable_type_to_string :: Massing Case\n");
+    exit(-1);
     }
     }
 
-    printf("variable_type_to_string :: Massing Case\n");
-    exit(-1);
+    
 }
 
 enum VARIABLE_TYPE_ENUM ast_type_to_variable_type_enum(enum AST_NODE_TYPE type)
