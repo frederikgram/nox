@@ -1,7 +1,6 @@
-
-
 //@TODO : Fix operator precedence ref: µstafa
 
+// Integers
 5/5;
 a:int = 10+5;
 b:int = a - 15;
@@ -13,3 +12,13 @@ func int add(a: int, b: int) {
 
 d:int = add(5, 10);
 e:int = add(5, add(5, 10)) * 2;
+
+// Characters
+f:char = 'a';
+g:char = 'b';
+fg:int = f < g; // Should return 1
+
+// Strings
+h:str = "hello";
+i:str = "world";
+j:str = h + " " + i; // Should return "hello world"

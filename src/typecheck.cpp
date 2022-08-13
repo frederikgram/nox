@@ -32,6 +32,7 @@ struct SCOPE *pop_scope()
     return scope;
 }
 
+// Certain AST_NODEs such as the literal token 'int' or 'str' needs to be converted from a NODE type to a VARIABLE type 'integer' or 'string'
 struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
 {
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
@@ -54,6 +55,9 @@ struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
     case A_STRING:
     case A_STR:
         type->type = V_STRING;
+        return type;
+    case A_VOID:
+        type->type = V_VOID;
         return type;
     default: 
         printf("Unknown type at get_type_from_subtree in typecheck.cpp :: received token '%s'\n", node->token->literal_value);
@@ -96,7 +100,6 @@ int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE
     }
 
 }
-
 int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
 {
     if (type1->type == V_INTEGER && type2->type == V_INTEGER)
@@ -127,6 +130,7 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
            (are_equivalent_types(a->pointer_to, b->pointer_to));
 }
 
+// This function is used to check if a variable is declared in the current scope
 struct VARIABLE * find_variable(std::string name)
 {
     for (int i = scopes.size() - 1; i >= 0; i--)
@@ -156,6 +160,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
     }
     case A_INTEGER:
     case A_STRING:
+    case A_VOID:
     case A_CHARACTER:
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is a literal of type %s\n",
                ast_node_type_to_string(expr->type));
@@ -197,10 +202,13 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         struct VARIABLE_TYPE * lhs = check_expression(expr->lhs);
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
-        if(lhs->type != V_INTEGER && lhs->type != V_CHARACTER) {
-            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not arithmetically compatible\n");
+        if(are_relationally_comparable(lhs, rhs) == 0) {
+            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not relationally comparable\n");
             exit(-1);
         }
+
+        type->type = V_INTEGER;
+        return type;
 }
     case A_NEQ:
     case A_EQ: {
@@ -208,7 +216,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
         if(are_equivalent_types(lhs, rhs) == 0) {
-            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not EQ/NEQ comparable\n");
+            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not equality comparable\n");
             exit(-1);
         }
 
@@ -243,6 +251,33 @@ void check_statement(struct AST_NODE *statement)
     case A_BLOCK:
         check_block(statement, {});
         break;
+        
+    case A_WHILE:
+    case A_IF: {
+
+        // Ensure that the conditional expression is of type integer
+        if (check_expression(statement->conditional)->type != V_INTEGER)
+        {
+            printf("Typechecking\t::\tcheck_statement\t::\tCondition of if statement is not an integer\n");
+            exit(-1);
+        }
+
+        // Check if all statements inside the block are valid, we don't use 'check_block' as it creates a new scope
+        for (auto stmt : statement->statements)
+        {
+            check_statement(stmt);
+        }
+
+        // If there is an else statement, ensure all its statements are valid.
+        if(statement->els != NULL) {
+            for (auto stmt : statement->els->statements)
+            {
+                check_statement(stmt);
+            }
+        }
+
+        break;
+}
     case A_FUNC_DEF: {
 
         // Build Function Variable
@@ -312,6 +347,14 @@ void check_statement(struct AST_NODE *statement)
         break;
     }
 
+    case A_PRINT:
+        if (check_expression(statement->lhs)->type != V_STRING)
+        {
+            printf("Typechecking\t::\tcheck_statement\t::\tPrint statement is not a string\n");
+            exit(-1);
+        }
+        break;
+
     case A_ASSIGN: {
         printf("Typechecking\t::\tcheck_statement\t::\tChecking Assignment\n");
 
@@ -360,8 +403,13 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 
     printf("Typechecking\t::\tcheck_block\t::\tChecking block\n");
 
-
     push_scope();
+    block->scope = scopes.back();
+    if(scopes.size() > 1) {
+        scopes.back()->parent = scopes[scopes.size() - 2];
+    } else {
+        scopes.back()->parent = NULL;
+    }
 
     if (params.size() > 0)
     {

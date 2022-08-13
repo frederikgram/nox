@@ -1,0 +1,6 @@
+// Functions can be declared with type 'void'
+func void test() {}
+
+// Variables can not
+// myvar: void (= void); // error: expected type, found 'void' 
+

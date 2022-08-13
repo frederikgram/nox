@@ -21,7 +21,7 @@ enum AST_NODE_TYPE
     A_MUL,
     A_NEQ,
     A_NOT,
-    A_STR,
+    A_STR,A_VOID,
     A_MOD,
     A_SUB,
     A_USE,
@@ -68,6 +68,9 @@ struct AST_NODE
     struct AST_NODE *conditional;
     std::vector<struct AST_NODE *> args;
     std::vector<struct AST_NODE *> statements;
+
+
+    struct SCOPE *scope;
 };
 
 struct PARSER_STATUS

@@ -50,7 +50,7 @@ enum TOKEN_TYPE
     T_RBRACKET,
     T_SEMICOLON,
     T_CHARACTER,
-    T_IDENTIFIER,
+    T_IDENTIFIER,T_VOID
 };
 
 union Value {

@@ -96,10 +96,14 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
     struct AST_NODE *type_node;
     struct AST_NODE *array_node;
  
-    if(status->current->type ==  T_INT || status->current->type == T_STR || status->current->type == T_CHAR)
+
+
+    if(status->current->type ==  T_INT || status->current->type == T_STR || status->current->type == T_CHAR || status->current->type == T_VOID)
     {
         type_node = make_node(status, token_type_to_node_type(status->current->type), parent);
         consume(status);
+
+        if(status->current->type == T_VOID) { return type_node;}
 
         // Parse Array Types
         while(status->current->type == T_LBRACKET) {
@@ -115,7 +119,11 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
             array_node->parent = parent;
             type_node = array_node;
         }
+    } else {
+        print_error(status->current->col, status->current->row, "Expected type but received '%s'", status->current->literal_value);
+        exit(-1);
     }
+
     return type_node;
 }
 // Creates an AST_NODE * of type A_IDENTIFIER if the status->current is a T_IDENTIFIER, if one was found, we consume it.
@@ -151,6 +159,9 @@ struct AST_NODE *parse_assignment(struct PARSER_STATUS *status, struct AST_NODE 
         {
             print_error_exit(status->current->col, status->current->row,
                              "No type specified during variable declaration");
+        } else if (node->vartype->type == A_VOID) {
+            print_error_exit(status->current->col, status->current->row,
+                             "Cannot declare a variable of type 'void'");
         }
     }
 

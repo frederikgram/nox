@@ -1,0 +1,4 @@
+
+print("Test");
+// Fails, not a str, print('c');
+// Fails, not a str, print(1);

@@ -68,6 +68,7 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
     {"char",T_CHAR} ,
     {"func",T_FUNC} ,
     {"else",T_ELSE} ,
+    {"void", T_VOID},
     {"input",T_INPUT},
     {"while",T_WHILE},
     {"print",T_PRINT},

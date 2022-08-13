@@ -36,6 +36,8 @@ enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
         return A_ASSIGN;
     case T_LESS:
         return A_LESS;
+    case T_VOID:
+        return A_VOID;
     case T_GREAT:
         return A_GREAT;
     case T_GEQ:
@@ -69,6 +71,8 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
     {
     case A_ADD:
         return "A_ADD";
+    case A_VOID:
+        return "A_VOID";
     case A_ARR:
         return "A_ARR";
     case A_ARRAY:
@@ -141,6 +145,8 @@ char *variable_type_to_string(struct VARIABLE_TYPE *type)
         return "V_FUNCTION";
     case V_ARRAY:
         return "V_ARRAY";
+    case V_VOID:
+        return "V_VOID";
     case V_IDENTIFIER:
         return "V_IDENTIFIER";
     default: {
@@ -166,6 +172,8 @@ enum VARIABLE_TYPE_ENUM ast_type_to_variable_type_enum(enum AST_NODE_TYPE type)
         return V_CHARACTER;
     case A_ARRAY:
         return V_ARRAY;
+    case A_VOID:
+        return V_VOID;
     default:
         return V_UNKNOWN;
     }

@@ -23,6 +23,7 @@ enum VARIABLE_TYPE_ENUM
     V_FUNCTION,
     V_ADDRESS,
     V_POINTER,
+    V_VOID,
     V_ARRAY
 };
 
