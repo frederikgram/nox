@@ -1,13 +1,15 @@
-{
-    5/5;
-    a:int = 10+5;
-    b:int = a - 15;
-    c:int = 5 * a + b;
 
-    func int add(a: int, b: int) {
-        return a + b;
-    }
 
-    d:int = add(5, 10);
-    e:int = add(5, add(5, 10)) * 2;
+//@TODO : Fix operator precedence ref: µstafa
+
+5/5;
+a:int = 10+5;
+b:int = a - 15;
+c:int = 5 * a + b;
+
+func int add(a: int, b: int) {
+    return a + b;
 }
+
+d:int = add(5, 10);
+e:int = add(5, add(5, 10)) * 2;

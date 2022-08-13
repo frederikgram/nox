@@ -60,6 +60,17 @@ void consume_assert(struct PARSER_STATUS *status, enum TOKEN_TYPE type, const ch
     }
 }
 
+struct AST_NODE * parse_program(struct PARSER_STATUS *status, struct AST_NODE *parent)
+{
+    struct AST_NODE *node = make_node(status, A_BLOCK, parent);
+    struct AST_NODE *stmt;
+    while ((stmt = parse_statement(status, node)) != NULL)
+    {
+        node->statements.push_back(stmt);
+    };
+
+    return node;
+}
 // Fetches a list of struct AST_NODE * statements and collects them inside an A_BLOCK node, pushing each statement to
 // node->statements
 struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *parent)
@@ -615,6 +626,6 @@ struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
     status->input = input;
     status->input_size = size;
 
-    status->root = parse_block(status, NULL);
+    status->root = parse_program(status, NULL);
     return status->root;
 }
