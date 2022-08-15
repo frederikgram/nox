@@ -6,7 +6,7 @@ DEPFILES := $(patsubst src/%.cpp,$(DEPDIR)/%.d,$(SRCS))
 OBJS      = $(patsubst src/%.cpp,$(OBJ)/%.o,$(SRCS))
 DEPFLAGS  = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
 EXE       = nothing
-CFLAGS    = -g -w -std=c++20
+CFLAGS    = -g -w -std=c++17
 LDLIBS    = -lm -lstdc++
 
 

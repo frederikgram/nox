@@ -5,6 +5,7 @@
 #include "typecheck.hpp"
 #include "utils.hpp"
 #include "intermediate.hpp"
+#include "emit.hpp"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,11 @@ int main(int argc, char *argv[])
     printf("\n/* BEGINNING TYPECHECKING */\n\n");
 
     tree = typecheck(tree);
-    printf("\n/* FINISHED TYPECHECKING */\n");
+    printf("\n/* FINISHED TYPECHECKING */\n/* BEGINNING INTERMEDIATE CODE GENERATION */\n\n");
+
+    std::vector<struct Instruction *> & instructions = generate_intermediate_representation(tree);
+
+    std::string output = emit(instructions);
 
     fclose(fp);
     free(buffer);

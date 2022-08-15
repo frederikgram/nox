@@ -1,5 +1,16 @@
 
 #include "utils.hpp"
+#include <iostream>
+#include <stdarg.h>
+
+char* format_string(const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  char *ret;
+  vasprintf(&ret, format, args);
+  va_end(args);
+  return ret;
+}
 
 // Converts _some_ enum TOKEN_TYPE's to enum AST_NODE_TYPE's
 enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
@@ -112,8 +123,21 @@ const char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_BREAK";
     case A_CONTINUE:
         return "A_CONTINUE";
+    case A_EQ:
+        return "A_EQ";
+    case A_NEQ:
+        return "A_NEQ";
+    case A_LESS:
+        return "A_LESS";
+    case A_GREAT:
+        return "A_GREAT";
+    case A_LEQ:
+        return "A_LEQ";
+    case A_GEQ:
+        return "A_GEQ";
     
     default: {
+        std::cout << "ast_node_type_to_string: Missing Case: " << type << std::endl;
         fprintf(stderr, "ast_node_type_to_string :: Missing Case\n");
         exit(-1);
     }

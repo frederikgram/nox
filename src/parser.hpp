@@ -70,6 +70,7 @@ struct AST_NODE
     std::vector<struct AST_NODE *> args;
     std::vector<struct AST_NODE *> statements;
 
+    struct VARIABLE_TYPE * expression_type;
 
     struct SCOPE *scope;
 };

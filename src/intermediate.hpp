@@ -34,6 +34,7 @@ enum Operator {
     O_POP,
     O_CALL,
     O_RET,
+    O_LEAQ,
 
     O_PRINT,
     // O_SCANF, @TODO : for when we get input working.
@@ -44,6 +45,7 @@ enum Operator {
 
     O_INT_TO_FLOAT,
     O_FLOAT_TO_INT,
+    
 };
 
 
@@ -126,6 +128,7 @@ enum Register {
         R_R14B,
         R_R15B,
 
+        R_NULL,
 };
 
 enum AddressingMode {
@@ -141,6 +144,7 @@ enum AddressingMode {
 
 struct Operand {
     AddressingMode mode;
+    enum VARIABLE_TYPE_ENUM type;
     int value;
     int offset;
 };
@@ -148,12 +152,12 @@ struct Operand {
 struct Instruction {
     Operator op;
     
-    Operand operand1;
-    Operand operand2;
+    Operand * operand1;
+    Operand * operand2;
 
-    enum Register register1;
-    enum Register register2;
-    enum AddressingMode addressing_mode;
+    enum Register register1 = R_NULL;
+    enum Register register2 = R_NULL;
+    enum AddressingMode mode;
 
     std::string label;
     std::string comment;
@@ -161,3 +165,4 @@ struct Instruction {
 };
 
 void comparison_operator(enum Operator jump_type, enum VARIABLE_TYPE_ENUM type);
+std::vector<struct Instruction *> & generate_intermediate_representation(struct AST_NODE * root);

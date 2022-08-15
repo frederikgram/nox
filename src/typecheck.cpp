@@ -157,11 +157,13 @@ struct VARIABLE * find_variable(std::string name)
     return NULL;
 }
 
+
 // Return a VARIABLE_TYPE representing the return type of the expression if one is found
-struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
+struct VARIABLE_TYPE *_check_expression(struct AST_NODE *expr)
 {
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
     printf("Typechecking\t::\tcheck_expression\t::\tChecking Expression\n");
+
 
     switch (expr->type)
     {
@@ -259,6 +261,16 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         exit(-1);
     }
 }
+
+//@TODO : this is a hacky way to do this, but it works for now
+struct VARIABLE_TYPE * check_expression(struct AST_NODE * expr){
+
+    struct VARIABLE_TYPE * type = _check_expression(expr);
+    expr->expression_type = type;
+    return type;
+
+}
+
 
 // Check if the child nodes of a statement and the statement structures itself are valid
 void check_statement(struct AST_NODE *statement)
