@@ -370,7 +370,6 @@ void check_statement(struct AST_NODE *statement)
 
         break;
     }
-
     case A_PRINT:
         if (check_expression(statement->lhs)->type != V_STRING)
         {

@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "typecheck.hpp"
 #include "utils.hpp"
+#include "intermediate.hpp"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>

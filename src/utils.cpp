@@ -122,6 +122,40 @@ const char *ast_node_type_to_string(enum AST_NODE_TYPE type)
     }
 }
 
+enum Operator ast_node_type_to_operator(enum AST_NODE_TYPE type) {
+
+    switch(type) {
+
+        case A_ADD:
+            return O_ADD;
+        case A_SUB:
+            return O_SUB;
+        case A_MUL:
+            return O_MUL;
+        case A_DIV:
+            return O_DIV;
+        case A_MOD:
+            return O_MOD;
+        case A_EQ:
+            return O_JE;
+        case A_NEQ:
+            return O_JNE;
+        case A_GREAT:
+            return O_JG;
+        case A_LESS:
+            return O_JL;
+        case A_GEQ:
+            return O_JGE;
+        case A_LEQ:
+            return O_JLE;
+        case A_PRINT:
+            return O_PRINT;
+        default:
+            fprintf(stderr, "ast_node_type_to_operator: Unknown operator type\n");
+            exit(1);
+    }
+}
+
 const char * variable_type_to_string(struct VARIABLE_TYPE *type)
 {
 
