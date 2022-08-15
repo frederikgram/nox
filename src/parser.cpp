@@ -158,10 +158,10 @@ struct AST_NODE *parse_assignment(struct PARSER_STATUS *status, struct AST_NODE 
         node->vartype = parse_type(status, node);
         if (node->vartype == NULL)
         {
-            print_error_exit(status->current->col, status->current->row,
+            fprintf(stderr,
                              "No type specified during variable declaration");
         } else if (node->vartype->type == A_VOID) {
-            print_error_exit(status->current->col, status->current->row,
+            fprintf(stderr,
                              "Cannot declare a variable of type 'void'");
         }
     }
@@ -255,7 +255,7 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         node->vartype = parse_type(status, node);
         if (node->vartype == NULL)
         {
-            print_error_exit(status->current->col, status->current->row, "No type specified in function definition");
+            fprintf(stderr,"No type specified in function definition");
         }
 
         // Parse Function Name
@@ -265,7 +265,7 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
         if (node->name == NULL)
         {
-            print_error_exit(status->current->col, status->current->row,
+            fprintf(stderr,
                              "Expected an identifier in funcion definition");
         }
 
@@ -284,16 +284,12 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
             if (arg == NULL)
             {
-                print_error_exit(status->current->col, status->current->row,
-                                 "Expected an identifier in argument declaration in "
-                                 "function definition");
+                fprintf(stderr,"Expected an identifier in argument declaration in function definition");
             }
 
             if (vartype == NULL)
             {
-                print_error_exit(status->current->col, status->current->row,
-                                 "Expected a type in argument declaration in "
-                                 "function definition");
+                fprintf(stderr,"Expected a type in argument declaration in function definition");
             }
 
             arg->vartype = vartype;
@@ -348,7 +344,7 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
     return node;
 }
-//@TODO : Not finished, add floats etc. ADD ARRAY LITERALS
+//@TODO : Add floats
 struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
 
@@ -424,7 +420,7 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
             while (status->current->type != T_RPARENS)
             {
                 arg = parse_expression(status, node);
-                if (arg == NULL) {print_error_exit(status->current->col, status->current->row,
+                if (arg == NULL) {fprintf(stderr,
                                      "Expected an expression as argument during function call"); }
 
                 node->args.push_back(arg);
@@ -435,7 +431,7 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
             consume_assert(status, T_RPARENS,
                            "Expected ')' at the end of argument declarations in "
                            "function definition");
-                           
+
             return node; // We return here as we've already consumed the ')' and breaking would consume what could be a
                          // ';' required by check_statement()
 
@@ -609,9 +605,7 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, A_ASSIGN, NULL);
 
-
         printf("parse_expression\t::\t%s\n", status->current->literal_value.c_str());
-
 
         consume(status);
         lhs->parent = p;

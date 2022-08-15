@@ -33,8 +33,10 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const std::string 
         new_token->value.strval = value;
         new_token->col = status->current_col;
     }
+
+    // @NOTE : This is somewhat of a hack, keywords would be given a charval representing keyword[0] and not a strval. This is fine as we use token->literal_value but not ideal anyhow.
     else
-    {
+    { 
         new_token->value.charval = value[0];
         new_token->col = status->current_col;
     }
@@ -71,7 +73,7 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
     {"return", T_RETURN},
 };
 
-std::map<std::string, enum TOKEN_TYPE> compound_operators = {
+std::map<std::string, enum TOKEN_TYPE> operators = {
 
     // Dual Character Operators
     {"==",T_EQ},
@@ -106,7 +108,6 @@ std::map<std::string, enum TOKEN_TYPE> compound_operators = {
 };
 
 
-
 struct TOKEN *lex(char *input, int size)
 {
     struct LEXER_STATUS *status = (struct LEXER_STATUS *)calloc(1,sizeof(struct LEXER_STATUS));
@@ -119,7 +120,7 @@ struct TOKEN *lex(char *input, int size)
     {
 
         // Check for both single-character and compound operators such as '+', '-', '==', and '&&'
-        for (auto it = compound_operators.begin(); it != compound_operators.end(); it++)
+        for (auto it = operators.begin(); it != operators.end(); it++)
         {
             if (cursor < size - 1 && it->first.length() == 2 && input[cursor] == it->first[0] && input[cursor + 1] == it->first[1]){
                 push(status, it->second, it->first.c_str(), 2);
@@ -142,7 +143,7 @@ struct TOKEN *lex(char *input, int size)
             status->current_col = 0;
             break;
         case '\t':
-            status->current_col += 4;
+            status->current_col++;
             break;
         case '\v':
         case '\r':
@@ -245,6 +246,8 @@ struct TOKEN *lex(char *input, int size)
 
             break;
         }
+
+        // @TODO : Maybe we should free the buffer here?
         cursor++;
     }
 
