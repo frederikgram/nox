@@ -1,4 +1,6 @@
-/**/
+/* */
+
+// @TODO : We're loosing blocks during calloc, see valgrind.
 
 #include "lexer.hpp"
 #include <ctype.h>
@@ -60,17 +62,22 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const std::string 
 }
 
 std::map<std::string, enum TOKEN_TYPE> keywords = {
+
     {"if",T_IF},
-    {"int",T_INT},
-    {"str",T_STR},
-    {"char",T_CHAR} ,
     {"func",T_FUNC} ,
     {"else",T_ELSE} ,
-    {"void", T_VOID},
     {"input",T_INPUT},
     {"while",T_WHILE},
     {"print",T_PRINT},
     {"return", T_RETURN},
+
+    // Types
+    {"int",T_INT},
+    {"str",T_STR},
+    {"char",T_CHAR},
+    {"void", T_VOID},
+
+
 };
 
 std::map<std::string, enum TOKEN_TYPE> operators = {
@@ -85,7 +92,7 @@ std::map<std::string, enum TOKEN_TYPE> operators = {
     {"&&",T_LAND},
     {"||",T_LOR},
 
-    // Single Character Operators
+    // Single Character Operators @NOTE : We don't insert '/' here as it needs to be check for start-of-comment use before being able to assert if its an operator. 
     {"+",T_ADD},
     {"-",T_SUB},
     {"*",T_STAR},
@@ -114,7 +121,7 @@ struct TOKEN *lex(char *input, int size)
 
     int segment_size = 0;
     int cursor = 0;
-    char *buffer;
+    char *buffer = NULL;
 
     while (cursor < size)
     {
@@ -137,7 +144,8 @@ struct TOKEN *lex(char *input, int size)
         // Whitespaces, tabs, newlines, and comments. 
         switch (input[cursor])
         {
-            // @TODO : Gives the wrong column and row number, might be caused in utils.cpp
+        
+        // @TODO : Gives the wrong column and row number, might be caused in utils.cpp
         case '\n':
             status->current_row++;
             status->current_col = 0;
@@ -247,8 +255,13 @@ struct TOKEN *lex(char *input, int size)
             break;
         }
 
-        // @TODO : Maybe we should free the buffer here?
         cursor++;
+
+        // Free the buffer if possible
+        if(buffer == NULL) {
+            free(buffer);
+            buffer = NULL;
+        }
     }
 
     return status->head;

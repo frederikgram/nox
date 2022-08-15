@@ -1,5 +1,3 @@
-/**/
-
 #include "parser.hpp"
 #include "lexer.hpp"
 #include "utils.hpp"
@@ -54,7 +52,7 @@ void consume_assert(struct PARSER_STATUS *status, enum TOKEN_TYPE type, const ch
     {
         va_list lst;
         va_start(lst, format);
-        print_error(status->current->col, status->current->row, format, lst);
+        fprintf(stderr, format, lst);
         va_end(lst);
         exit(-1);
     }
@@ -121,7 +119,7 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
             type_node = array_node;
         }
     } else {
-        print_error(status->current->col, status->current->row, "Expected type but received '%s'", status->current->literal_value);
+        fprintf(stderr, "Expected type but received '%s'", status->current->literal_value);
         exit(-1);
     }
 

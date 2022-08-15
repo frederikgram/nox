@@ -3,29 +3,6 @@
 
 using namespace std;
 
-// @TODO : this is temporary, it sucks ! Print both the row and its two
-// surrounding rows in both directions, with a row containing the given error
-// message pointing at the proper column
-void print_error(int col, int row, const char *message, ...)
-{
-    int row_number = 1;
-    int shown = 0;
-    int i = 0;
-    va_list lst;
-    va_start(lst, message);
-    fprintf(stderr, message, lst);
-    va_end(lst);
-    fprintf(stderr, " at line '%d', column '%d'\n", row + 1, col - 2);
-}
-// Calls print_error and exits with flag -1
-void print_error_exit(int col, int row, const char *message, ...)
-{
-    va_list lst;
-    va_start(lst, message);
-    print_error(col, row, message, lst);
-    va_end(lst);
-    exit(-1);
-}
 
 
 // Converts _some_ enum TOKEN_TYPE's to enum AST_NODE_TYPE's

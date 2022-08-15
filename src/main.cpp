@@ -60,9 +60,7 @@ int main(int argc, char *argv[])
     printf("\n/* BEGINNING TYPECHECKING */\n\n");
 
     tree = typecheck(tree);
-#ifdef DEBUG
     printf("\n/* FINISHED TYPECHECKING */\n");
-#endif
 
     fclose(fp);
     free(buffer);
