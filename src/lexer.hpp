@@ -1,7 +1,6 @@
 #pragma once
 #include "tokens.hpp"
 
-using namespace std;
 
 struct LEXER_STATUS
 {

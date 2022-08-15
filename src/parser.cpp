@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-using namespace std;
 
 // Allocate and populate a new AST_NODE
 struct AST_NODE *make_node(struct PARSER_STATUS *status, enum AST_NODE_TYPE type, struct AST_NODE *parent)

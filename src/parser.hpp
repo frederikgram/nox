@@ -3,7 +3,6 @@
 #include <map>
 #include <string>
 #include <vector>
-using namespace std;
 
 enum AST_NODE_TYPE
 {
