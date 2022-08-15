@@ -172,7 +172,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         printf("Typechecking\t::\tcheck_expression\t::\tArray of type %s with size %d\n", variable_type_to_string(type->array_type), type->array_size);
         return type;
     }
-
     case A_INTEGER:
     case A_STRING:
     case A_VOID:
@@ -255,9 +254,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         printf("Typechecking\t::\tcheck_expression\t::\tVariable '%s' found\n", expr->token->literal_value.c_str());
         return var->type;
     }
-
-
-
     default:
         fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
         exit(-1);
@@ -273,7 +269,7 @@ void check_statement(struct AST_NODE *statement)
     switch (statement->type)
     {
     case A_BLOCK:
-        check_block(statement, {});
+        check_block(statement);
         break;
 
     case A_WHILE:
@@ -301,7 +297,6 @@ void check_statement(struct AST_NODE *statement)
         }
 
         is_inside_loop = false;
-
         break;
     }
 
@@ -425,7 +420,7 @@ void check_statement(struct AST_NODE *statement)
 }
 
 // Checks a block of statements, creating a new scope if necessary. If parameters are passed in, these are added to the new scope.
-void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
+void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params )
 {
 
 
@@ -464,6 +459,6 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 // Entrypoint for typechecking
 struct AST_NODE *typecheck(struct AST_NODE *root)
 {
-    check_block(root, {});
+    check_block(root);
     return root;
 }

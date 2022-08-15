@@ -74,6 +74,6 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr);
 void check_statement(struct AST_NODE *statement);
 
 // Checks a block of statements, creating a new scope if necessary
-void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params);
+void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params = {});
 
 struct AST_NODE *typecheck(struct AST_NODE *root);
