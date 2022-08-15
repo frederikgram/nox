@@ -73,6 +73,7 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
 
 std::map<std::string, enum TOKEN_TYPE> compound_operators = {
 
+    // Dual Character Operators
     {"==",T_EQ},
     {"!=",T_NEQ},
     {"<",T_LESS},
@@ -82,7 +83,7 @@ std::map<std::string, enum TOKEN_TYPE> compound_operators = {
     {"&&",T_LAND},
     {"||",T_LOR},
 
-    // Single 
+    // Single Character Operators
     {"+",T_ADD},
     {"-",T_SUB},
     {"*",T_STAR},
