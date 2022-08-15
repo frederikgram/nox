@@ -20,6 +20,8 @@ enum TOKEN_TYPE
     T_ADD,
     T_SUB,
     T_DIV,
+    T_LOR,
+    T_LAND,
     T_DOT,
     T_NEQ,
     T_LESS,
@@ -37,12 +39,12 @@ enum TOKEN_TYPE
     T_INPUT,
     T_PRINT,
     T_ASSIGN,
+    T_ADDRESSOF,
+    T_DEREF,
     T_RBRACE,
     T_LBRACE,
     T_STRING,
-    T_ELSEIF,
     T_RETURN,
-    T_INCLUDE,
     T_INTEGER,
     T_LPARENS,
     T_RPARENS,
@@ -50,14 +52,15 @@ enum TOKEN_TYPE
     T_RBRACKET,
     T_SEMICOLON,
     T_CHARACTER,
-    T_IDENTIFIER,T_VOID
+    T_IDENTIFIER,
+    T_VOID
 };
 
 union Value {
     int intval;
     float floatval;
     char charval;
-    char *strval;
+    std::string strval;
 };
 
 struct TOKEN
@@ -68,5 +71,5 @@ struct TOKEN
     int col;
     struct TOKEN *next;
     struct TOKEN *prev;
-    char *literal_value;
+    std::string literal_value;
 };

@@ -59,7 +59,7 @@ struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
         type->type = V_VOID;
         return type;
     default: 
-        printf("Unknown type at get_type_from_subtree in typecheck.cpp :: received token '%s'\n", node->token->literal_value);
+        fprintf(stderr, "Unknown type at get_type_from_subtree in typecheck.cpp :: received token '%s'\n", node->token->literal_value.c_str());
         exit(-1);
     }
 
@@ -93,7 +93,7 @@ int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE
         return 0;
 
     default:
-        printf("Unknown type at are_arithmetiically_compatible in typecheck.cpp\n");
+        fprintf(stderr, "Unknown type at are_arithmetiically_compatible in typecheck.cpp\n");
         exit(-1);
     }
 
@@ -127,6 +127,10 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
     return (a->type == b->type) && (are_equivalent_types(a->array_type, b->array_type)) &&
            (are_equivalent_types(a->pointer_to, b->pointer_to));
 }
+int is_literal(struct AST_NODE *node)
+{
+    return node->type == A_INTEGER || node->type == A_STRING || node->type == A_CHARACTER;
+}
 
 // This function is used to check if a variable is declared in the current scope
 struct VARIABLE * find_variable(std::string name)
@@ -156,6 +160,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         printf("Typechecking\t::\tcheck_expression\t::\tArray of type %s with size %d\n", variable_type_to_string(type->array_type), type->array_size);
         return type;
     }
+
     case A_INTEGER:
     case A_STRING:
     case A_VOID:
@@ -164,17 +169,19 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
                ast_node_type_to_string(expr->type));
 
         return get_type_from_subtree(expr);
+
     case A_FUNC_CALL: {
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is a function call\n");
         struct VARIABLE *func = find_variable(expr->token->literal_value);
         if (func == NULL)
         {
-            printf("Typechecking\t::\tcheck_expression\t::\tFunction %s not found\n", expr->token->literal_value);
+            fprintf(stderr,"Typechecking\t::\tcheck_expression\t::\tFunction %s not found\n", expr->token->literal_value.c_str());
             exit(-1);
         }
-        printf("Typechecking\t::\tcheck_expression\t::\tFunction '%s' found\n", expr->token->literal_value);
+        printf("Typechecking\t::\tcheck_expression\t::\tFunction '%s' found\n", expr->token->literal_value.c_str());
         return func->type->return_type;
     }
+
     case A_ADD:
     case A_SUB:
     case A_MUL:
@@ -186,12 +193,13 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
         if(are_arithmetiically_compatible(expr->type, lhs, rhs) == 0) {
-            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not arithmetically compatible\n");
+            fprintf(stderr,"Typechecking\t::\tcheck_expression\t::\tExpression is not arithmetically compatible\n");
             exit(-1);
         }
 
         return lhs;
     }
+
     case A_GREAT:
     case A_LESS:
     case A_GEQ:
@@ -200,38 +208,63 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
         if(are_relationally_comparable(lhs, rhs) == 0) {
-            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not relationally comparable\n");
+            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tExpression is not relationally comparable\n");
             exit(-1);
         }
 
         type->type = V_INTEGER;
         return type;
-}
+    }
+
     case A_NEQ:
     case A_EQ: {
         struct VARIABLE_TYPE * lhs = check_expression(expr->lhs);
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
         if(are_equivalent_types(lhs, rhs) == 0) {
-            printf("Typechecking\t::\tcheck_expression\t::\tExpression is not equality comparable\n");
+            fprintf(stderr,"Typechecking\t::\tcheck_expression\t::\tExpression is not equality comparable\n");
             exit(-1);
         }
 
         return lhs;
     }
+
+    // A_ADDRESSOF
+    // A_DEREF
+
     case A_IDENTIFIER: {
         printf("Typechecking\t::\tcheck_expression\t::\tExpression is an identifier\n");
         struct VARIABLE *var = find_variable(expr->token->literal_value);
         if (var == NULL)
         {
-            printf("Typechecking\t::\tcheck_expression\t::\tVariable %s not found\n", expr->token->literal_value);
+            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tVariable %s not found\n", expr->token->literal_value.c_str());
             exit(-1);
         }
-        printf("Typechecking\t::\tcheck_expression\t::\tVariable '%s' found\n", expr->token->literal_value);
+        printf("Typechecking\t::\tcheck_expression\t::\tVariable '%s' found\n", expr->token->literal_value.c_str());
         return var->type;
     }
+
+    case A_INDEX: {
+        printf("Typechecking\t::\tcheck_expression\t::\tExpression is an index\n");
+        struct VARIABLE_TYPE *array_type = check_expression(expr->lhs);
+        struct VARIABLE_TYPE *index_type = check_expression(expr->rhs);
+
+        if (array_type->type != V_ARRAY)
+        {
+            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tExpression is not an array\n");
+            exit(-1);
+        }
+
+        if (index_type->type != V_INTEGER)
+        {
+            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tExpression is not an integer\n");
+            exit(-1);
+        }
+
+        return array_type->array_type;
+}
     default:
-        printf("Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
+        fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
         exit(-1);
     }
 }
@@ -252,7 +285,7 @@ void check_statement(struct AST_NODE *statement)
         // Ensure that the conditional expression is of type integer
         if (check_expression(statement->conditional)->type != V_INTEGER)
         {
-            printf("Typechecking\t::\tcheck_statement\t::\tCondition of if statement is not an integer\n");
+            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\tCondition of if statement is not an integer\n");
             exit(-1);
         }
 
@@ -313,7 +346,7 @@ void check_statement(struct AST_NODE *statement)
         // Ensure that the return statement is inside a function
         if (functions.size() == 0)
         {
-            print_error_exit(statement->token->col, statement->token->row,
+            fprintf(stderr,
                              "Typechecking\t::\tcheck_statement\t::\tReturn statement outside of function\n");
         }
 
@@ -329,9 +362,7 @@ void check_statement(struct AST_NODE *statement)
         // Ensure that the return type matches the function return type
         if (are_equivalent_types(functions.back()->type->return_type, return_type) == 0)
         {
-            print_error_exit(
-                statement->token->col, statement->token->row,
-                "Typechecking\t::\tcheck_statement\t::\tReturn type does not match function return type\n");
+            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\tReturn type does not match function return type\n");
         }
 
         break;
@@ -340,7 +371,7 @@ void check_statement(struct AST_NODE *statement)
     case A_PRINT:
         if (check_expression(statement->lhs)->type != V_STRING)
         {
-            printf("Typechecking\t::\tcheck_statement\t::\tPrint statement is not a string\n");
+            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\tPrint statement is not a string\n");
             exit(-1);
         }
         break;
@@ -353,9 +384,7 @@ void check_statement(struct AST_NODE *statement)
         if(lhs == NULL)
         {
             if(statement->vartype == NULL) {
-            print_error_exit(statement->token->col, statement->token->row,
-                             "Typechecking\t::\tcheck_statement\t::\tVariable %s not found\n",
-                             statement->lhs->token->literal_value);
+            printf("Typechecking\t::\tcheck_statement\t::\tVariable %s not found\n", statement->lhs->token->literal_value.c_str());
             } else {
                 // Create new variable
                 lhs = new struct VARIABLE;
@@ -374,7 +403,7 @@ void check_statement(struct AST_NODE *statement)
         // If the types are not equivalent, throw an error
         if(are_equivalent_types(lhs->type, rhs) == 0)
         {
-            printf("Typechecking\t::\tcheck_statement\t::\tVariable '%s' is of type %s, cannot assign value of type %s\n", lhs->name.c_str(), variable_type_to_string(lhs->type), variable_type_to_string(rhs));
+            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\tVariable '%s' is of type %s, cannot assign value of type %s\n", lhs->name.c_str(), variable_type_to_string(lhs->type), variable_type_to_string(rhs));
             exit(-1);
         }
         break;

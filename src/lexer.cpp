@@ -13,7 +13,7 @@
 using namespace std;
 
 // Create and append a new struct TOKEN to the linked-list of tokens.
-void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value, int size)
+void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const std::string value, int size)
 {
     struct TOKEN *new_token = (struct TOKEN *)calloc(1,sizeof(struct TOKEN));
 
@@ -21,18 +21,16 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value,
     new_token->row = status->current_row;
 
     // literal_value contains the value without being cast to it's proper type such as int or char.
-    new_token->literal_value = (char *)calloc(1, size);
-    strcpy(new_token->literal_value, value);
+    new_token->literal_value = value;
 
     if (token == T_INTEGER)
     {
-        new_token->value.intval = atoi(value);
+        new_token->value.intval = atoi(value.c_str());
         new_token->col = status->current_col;
     }
-    else if (size > 1)
+    else if (token == T_IDENTIFIER || token == T_STRING)
     {
-        new_token->value.strval = (char *)calloc(1, size);
-        strncpy(new_token->value.strval, value, size);
+        new_token->value.strval = value;
         new_token->col = status->current_col;
     }
     else
@@ -41,9 +39,7 @@ void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const char *value,
         new_token->col = status->current_col;
     }
 
-#if DEBUG
-    printf("Lexing\t::\tpush\t::\t%s\n", new_token->literal_value);
-#endif
+    printf("Lexing\t::\tpush\t::\t%s\n", new_token->literal_value.c_str());
 
     status->current_col += size;
 
@@ -75,6 +71,41 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
     {"return", T_RETURN},
 };
 
+std::map<std::string, enum TOKEN_TYPE> compound_operators = {
+
+    {"==",T_EQ},
+    {"!=",T_NEQ},
+    {"<",T_LESS},
+    {">",T_GREAT},
+    {"<=",T_LEQ},
+    {">=",T_GEQ},
+    {"&&",T_LAND},
+    {"||",T_LOR},
+
+    // Single 
+    {"+",T_ADD},
+    {"-",T_SUB},
+    {"*",T_STAR},
+    {"%",T_MOD},
+    {"=",T_ASSIGN},
+    {"!",T_BANG},
+    {"&",T_AMP},
+    {"|",T_PIPE},
+    {".",T_DOT},
+    {",",T_COMMA},
+    {":",T_COLON},
+    {"(",T_LPARENS},
+    {")",T_RPARENS},
+    {"[",T_LBRACKET},
+    {"]",T_RBRACKET},
+    {"{",T_LBRACE},
+    {"}",T_RBRACE},
+    {";",T_SEMICOLON},
+
+};
+
+
+
 struct TOKEN *lex(char *input, int size)
 {
     struct LEXER_STATUS *status = (struct LEXER_STATUS *)calloc(1,sizeof(struct LEXER_STATUS));
@@ -85,42 +116,23 @@ struct TOKEN *lex(char *input, int size)
 
     while (cursor < size)
     {
-        // Check for compound operators such as '==' and '&&'
-        if (cursor < size - 1)
-        {
 
-            if (strncmp("==", input + cursor, 2) == 0)
-            {
-                push(status, T_EQ, "==", 2);
-                cursor += 2;
-            }
-            if (strncmp("<=", input + cursor, 2) == 0)
-            {
-                push(status, T_LEQ, "<=", 2);
-                cursor += 2;
-            }
-            if (strncmp(">=", input + cursor, 2) == 0)
-            {
-                push(status, T_GEQ, ">=", 2);
-                cursor += 2;
-            }
-            if (strncmp("!=", input + cursor, 2) == 0)
-            {
-                push(status, T_NEQ, "!=", 2);
-                cursor += 2;
-            }
-            if (strncmp("&&", input + cursor, 2) == 0)
-            {
-                push(status, T_AND, "&&", 2);
-                cursor += 2;
-            }
-            if (strncmp("||", input + cursor, 2) == 0)
-            {
-                push(status, T_OR, "||", 2);
-                cursor += 2;
+        // Check for both single-character and compound operators such as '+', '-', '==', and '&&'
+        for (auto it = compound_operators.begin(); it != compound_operators.end(); it++)
+        {
+            if (cursor < size - 1 && it->first.length() == 2 && input[cursor] == it->first[0] && input[cursor + 1] == it->first[1]){
+                push(status, it->second, it->first.c_str(), 2);
+                cursor += 1;
+                // We only increment by one as breaking the loop will increment by one.
+                break;
+            } else if(input[cursor] == it->first[0]) {
+                push(status, it->second, it->first.c_str(), 1);
+                // We don't increment the cursor as breaking the loop will do that for us.
+                break;
             }
         }
-
+  
+        // Whitespaces, tabs, newlines, and comments. 
         switch (input[cursor])
         {
             // @TODO : Gives the wrong column and row number, might be caused in utils.cpp
@@ -137,8 +149,8 @@ struct TOKEN *lex(char *input, int size)
             status->current_col++;
             break;
 
+        // Start of comment '// foo bar'
         case '/':
-            // Start of comment '// foo bar'
             if (cursor + 1 <= size && input[cursor + 1] == '/')
             {
                 while (input[cursor] != '\n')
@@ -154,68 +166,8 @@ struct TOKEN *lex(char *input, int size)
             }
             break;
 
-        case '-':
-            push(status, T_SUB, "-", 1);
-            break;
-        case ',':
-            push(status, T_COMMA, ",", 1);
-            break;
-        case ';':
-            push(status, T_SEMICOLON, ";", 1);
-            break;
-        case ':':
-            push(status, T_COLON, ":", 1);
-            break;
-        case '!':
-            push(status, T_BANG, "!", 1);
-            break;
-        case '.':
-            push(status, T_DOT, ".", 1);
-            break;
-        case '(':
-            push(status, T_LPARENS, "(", 1);
-            break;
-        case ')':
-            push(status, T_RPARENS, ")", 1);
-            break;
-        case '[':
-            push(status, T_LBRACKET, "[", 1);
-            break;
-        case ']':
-            push(status, T_RBRACKET, "]", 1);
-            break;
-        case '{':
-            push(status, T_LBRACE, "{", 1);
-            break;
-        case '}':
-            push(status, T_RBRACE, "}", 1);
-            break;
-        case '*':
-            push(status, T_STAR, "*", 1);
-            break;
-        case '&':
-            push(status, T_AMP, "&", 1);
-            break;
-        case '%':
-            push(status, T_MOD, "%%", 1);
-            break;
-        case '+':
-            push(status, T_ADD, "+", 1);
-            break;
-        case '<':
-            push(status, T_LESS, "<", 1);
-            break;
-        case '=':
-            push(status, T_ASSIGN, "=", 1);
-            break;
-        case '>':
-            push(status, T_GREAT, ">", 1);
-            break;
-        case '|':
-            push(status, T_PIPE, "|", 1);
-            break;
-
-        // Start of string @TODO : Surely there is a prettier way to do this...
+  
+        // Start of a string literal
         case '"':
             while (cursor + 1 <= size && (input[++cursor] != '"' || input[cursor - 1] == '\\'))
             {
@@ -228,7 +180,8 @@ struct TOKEN *lex(char *input, int size)
             segment_size = 0;
             break;
 
-        case '\'': // Character Literal
+        // Character Literal
+        case '\'': 
             buffer = (char *)calloc(1,4);
             buffer[3] = '\0';
             memcpy(buffer, input + cursor, 3);
@@ -245,6 +198,7 @@ struct TOKEN *lex(char *input, int size)
                 cursor++;
             }
 
+            // Attempt to push an integer literal if one is found
             if (segment_size > 0)
             {
                 buffer = (char *)calloc(1,segment_size + 1);
@@ -268,19 +222,17 @@ struct TOKEN *lex(char *input, int size)
             // Found an Identifier or Keyword
             if (segment_size > 0)
             {
-
                 buffer = (char *)calloc(1,segment_size + 1);
                 buffer[segment_size] = '\0';
                 memcpy(buffer, input + cursor - segment_size, segment_size);
-
 
                 // Check if it's a keyword
                 if(keywords.find(buffer) != keywords.end())
                 {
                     push(status, keywords[buffer], buffer, segment_size);
-                }
+                
                 // It's an identifier
-                else
+                } else
                 {
                     push(status, T_IDENTIFIER, buffer, segment_size);
                 }

@@ -62,6 +62,7 @@ void consume_assert(struct PARSER_STATUS *status, enum TOKEN_TYPE type, const ch
 
 struct AST_NODE * parse_program(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
+
     struct AST_NODE *node = make_node(status, A_BLOCK, parent);
     struct AST_NODE *stmt;
     while ((stmt = parse_statement(status, node)) != NULL)
@@ -199,6 +200,8 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
     switch (status->current->type)
     {
+    
+  
     case T_WHILE:
     case T_IF:
         node = make_node(status, status->current->type == T_IF ? A_IF : A_WHILE, parent);
@@ -258,7 +261,7 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         // Parse Function Name
         node->name = parse_identifier(status, node);
 
-        printf("Parsing function def with name %s\n", node->name->token->literal_value);
+        printf("Parsing function def with name %s\n", node->name->token->literal_value.c_str());
 
         if (node->name == NULL)
         {
@@ -353,15 +356,13 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
 
     switch (status->current->type)
     {
-    // Expression is a (expr)
+    // Expression is encapsulated in parentheses
     case T_LPARENS:
         consume(status);
         node = parse_expression(status, parent);
         consume_assert(status, T_RPARENS, "Expected a ')' at the end of a '(expr)' ");
-
-
+        
         printf("parse_factor\t::\tT_LPARENS\t::\t%c\n", status->current->value.charval);
-
 
         return node; // we return instead of breaking as we need to perform
                      // 'consume_assert()' and breaking would only perform
@@ -387,20 +388,33 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
 
     case T_STRING:
         node = make_node(status, A_STRING, parent);
-        printf("parse_factor\t::\tT_char *\t::\t%s\n", status->current->value.strval);
+        printf("parse_factor\t::\tT_char *\t::\t%s\n", status->current->value.strval.c_str());
         break;
     case T_INTEGER:
         node = make_node(status, A_INTEGER, parent);
         printf("parse_factor\t::\tT_INTEGER\t::\t%d\n", status->current->value.intval);
         break;
+
+    case T_STAR:
+        node = make_node(status, A_DEREF, parent);
+        consume(status);
+        node->lhs = parse_factor(status, node);
+        return node;
+
+    case T_AMP:
+        node = make_node(status, A_ADDRESSOF, parent);
+        consume(status);
+        node->lhs = parse_factor(status, node);
+        return node;
+
     case T_IDENTIFIER:
 
         // Expression is a function call
         if (status->current->next->type == T_LPARENS)
         {
-            printf("parse_factor\t::\tFUNCTION_CALL\t::\t%s\n", status->current->literal_value);
+            printf("parse_factor\t::\tFUNCTION_CALL\t::\t%s\n", status->current->literal_value.c_str());
             node = make_node(status, A_FUNC_CALL, parent);
-            printf("parse_expression\t::\tFunction Call\t::\t%s\n", status->current->literal_value);
+            printf("parse_expression\t::\tFunction Call\t::\t%s\n", status->current->literal_value.c_str());
 
             struct AST_NODE *vartype;
             struct AST_NODE *arg;
@@ -410,38 +424,32 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
             while (status->current->type != T_RPARENS)
             {
                 arg = parse_expression(status, node);
-                if (arg == NULL)
-                {
-                    print_error_exit(status->current->col, status->current->row,
-                                     "Expected an expression as argument during function call");
-                }
+                if (arg == NULL) {print_error_exit(status->current->col, status->current->row,
+                                     "Expected an expression as argument during function call"); }
 
                 node->args.push_back(arg);
 
-                if (status->current->type == T_COMMA)
-                {
-                    consume(status);
-                    continue;
-                }
+                if (status->current->type == T_COMMA){ consume(status); continue; }
                 break;
             }
             consume_assert(status, T_RPARENS,
                            "Expected ')' at the end of argument declarations in "
                            "function definition");
+                           
             return node; // We return here as we've already consumed the ')' and breaking would consume what could be a
                          // ';' required by check_statement()
-        }
+
         // Expression is just a pure identifier
-        else
+        } else
         {
             node = make_node(status, A_IDENTIFIER, parent);
-            printf("parse_factor\t::\tT_IDENTIFIER\t::\t%s\n", status->current->literal_value);
+            printf("parse_factor\t::\tT_IDENTIFIER\t::\t%s\n", status->current->literal_value.c_str());
         }
 
         break;
     case T_CHARACTER:
         node = make_node(status, A_CHARACTER, parent);
-        printf("parse_factor\t::\tT_CHARACTER\t::\t%s\n", status->current->literal_value);
+        printf("parse_factor\t::\tT_CHARACTER\t::\t%s\n", status->current->literal_value.c_str());
         break;
     default:
         return NULL;
@@ -462,7 +470,7 @@ struct AST_NODE *parse_term(struct PARSER_STATUS *status, struct AST_NODE *paren
     {
         p = make_node(status, token_type_to_node_type(status->current->type), NULL);
 
-        printf("parse_term\t::\t%s\n", status->current->literal_value);
+        printf("parse_term\t::\t%s\n", status->current->literal_value.c_str());
 
         consume(status);
         lhs->parent = p;
@@ -489,9 +497,7 @@ struct AST_NODE *parse_addititive(struct PARSER_STATUS *status, struct AST_NODE 
     {
         p = make_node(status, status->current->type == T_ADD ? A_ADD : A_SUB, NULL);
 
-
-        printf("parse_addititive\t::\t%s\n", status->current->literal_value);
-
+        printf("parse_addititive\t::\t%s\n", status->current->literal_value.c_str());
 
         consume(status);
         lhs->parent = p;
@@ -519,7 +525,7 @@ struct AST_NODE *parse_relational(struct PARSER_STATUS *status, struct AST_NODE 
         p = make_node(status, token_type_to_node_type(status->current->type), NULL);
 
 
-        printf("parse_relational\t::\t%s\n", status->current->literal_value);
+        printf("parse_relational\t::\t%s\n", status->current->literal_value.c_str());
 
 
         consume(status);
@@ -548,7 +554,7 @@ struct AST_NODE *parse_logical_and(struct PARSER_STATUS *status, struct AST_NODE
         p = make_node(status, A_LAND, NULL);
 
 
-        printf("parse_logical_and\t::\t%s\n", status->current->literal_value);
+        printf("parse_logical_and\t::\t%s\n", status->current->literal_value.c_str());
 
 
         consume(status);
@@ -577,7 +583,7 @@ struct AST_NODE *parse_logical_or(struct PARSER_STATUS *status, struct AST_NODE 
         p = make_node(status, A_LOR, NULL);
 
 
-        printf("parse_logical_or\t::\t%s\n", status->current->literal_value);
+        printf("parse_logical_or\t::\t%s\n", status->current->literal_value.c_str());
 
         consume(status);
         lhs->parent = p;
@@ -604,7 +610,7 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
         p = make_node(status, A_ASSIGN, NULL);
 
 
-        printf("parse_expression\t::\t%s\n", status->current->literal_value);
+        printf("parse_expression\t::\t%s\n", status->current->literal_value.c_str());
 
 
         consume(status);
@@ -622,6 +628,8 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
  * for the recursion */
 struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
 {
+
+
     // Initialization
     struct PARSER_STATUS *status = (struct PARSER_STATUS *)malloc(sizeof(struct PARSER_STATUS));
     struct AST_NODE *root = (struct AST_NODE *)malloc(sizeof(struct AST_NODE));
@@ -630,6 +638,8 @@ struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
     status->vpos = 0;
     status->input = input;
     status->input_size = size;
+
+
 
     status->root = parse_program(status, NULL);
     return status->root;
