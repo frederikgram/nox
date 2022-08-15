@@ -84,7 +84,6 @@ struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *pare
         node->statements.push_back(stmt);
     };
 
-    printf("ytttt    %s\n", status->current->literal_value.c_str());
     consume_assert(status, T_RBRACE, "Expected '}' but received '%s'", status->current->literal_value);
     return node;
 }
@@ -96,7 +95,6 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
 
     struct AST_NODE *type_node;
     struct AST_NODE *array_node;
- 
 
 
     if(status->current->type ==  T_INT || status->current->type == T_STR || status->current->type == T_CHAR || status->current->type == T_VOID)

@@ -128,8 +128,6 @@ enum Register {
 
 };
 
-
-
 enum AddressingMode {
     AM_IMMEDIATE,
     AM_DIRECT,

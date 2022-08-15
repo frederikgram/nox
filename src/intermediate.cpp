@@ -40,7 +40,7 @@ void comparison_operator(enum Operator jump_type, enum VARIABLE_TYPE_ENUM type) 
 
     // Compare the two operands
     instructions.push_back(Instruction {
-        .op = type == V_INTEGER ? O_CMP : O_CMPB, // @TODO : This is a hack. CMPB is for characters when type == V_CHARACTER
+        .op = type == V_INTEGER ? O_CMP : O_CMPB, // @TODO : This is a hack. O_CMPB is for characters when type == V_CHARACTER
         .register1 = R_R10,
         .register2 = R_R11,
     });
