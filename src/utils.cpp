@@ -1,8 +1,6 @@
 
 #include "utils.hpp"
 
-using namespace std;
-
 // Converts _some_ enum TOKEN_TYPE's to enum AST_NODE_TYPE's
 enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
 {

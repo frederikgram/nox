@@ -3,7 +3,6 @@
 #include "parser.hpp"
 #include "typecheck.hpp"
 #include "intermediate.hpp"
-using namespace std;
 
 enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type);
 const char *ast_node_type_to_string(enum AST_NODE_TYPE type);

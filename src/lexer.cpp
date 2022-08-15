@@ -12,8 +12,6 @@
 #include <vector>
 #include <map>
 
-using namespace std;
-
 // Create and append a new struct TOKEN to the linked-list of tokens.
 void push(struct LEXER_STATUS *status, enum TOKEN_TYPE token, const std::string value, int size)
 {

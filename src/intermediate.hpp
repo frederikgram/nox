@@ -1,18 +1,8 @@
-/**/
-
 #pragma once
 
-#include "lexer.hpp"
 #include "parser.hpp"
-#include "tokens.hpp"
-#include <assert.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "typecheck.hpp"
 #include <string.h>
-#include <vector>
-using namespace std;
 
 enum Operator {
 
@@ -29,6 +19,9 @@ enum Operator {
     O_MUL,
     O_DIV,
     O_MOD,
+
+    O_CMP,
+    O_CMPB,
 
     O_ALLOC_STACK,
     O_ALLOC_HEAP,
@@ -53,29 +46,6 @@ enum Operator {
     O_FLOAT_TO_INT,
 };
 
-enum AdressingMode {
-    AM_IMMEDIATE,
-    AM_DIRECT,
-    AM_INDIRECT,
-    AM_INDIRECT_OFFSET,
-    AM_INDIRECT_OFFSET_INDEX,
-    AM_INDIRECT_INDEX,
-    AM_INDIRECT_INDEX_OFFSET,
-    AM_INDIRECT_INDEX_OFFSET_INDEX,
-};
-
-struct Operand {
-    AdressingMode mode;
-    int value;
-};
-
-
-struct Instruction {
-    Operator op;
-    Operand operand1;
-    Operand operand2;
-    Operand operand3;
-};
 
 
 enum Register {
@@ -157,3 +127,37 @@ enum Register {
         R_R15B,
 
 };
+
+enum AddressingMode {
+    AM_IMMEDIATE,
+    AM_DIRECT,
+    AM_INDIRECT,
+    AM_INDIRECT_OFFSET,
+    AM_INDIRECT_OFFSET_INDEX,
+    AM_INDIRECT_INDEX,
+    AM_INDIRECT_INDEX_OFFSET,
+    AM_INDIRECT_INDEX_OFFSET_INDEX,
+};
+
+struct Operand {
+    AddressingMode mode;
+    int value;
+    int offset;
+};
+
+struct Instruction {
+    Operator op;
+    
+    Operand operand1;
+    Operand operand2;
+
+    enum Register register1;
+    enum Register register2;
+    enum AddressingMode addressing_mode;
+
+    std::string label;
+    std::string comment;
+
+};
+
+void comparison_operator(enum Operator jump_type, enum VARIABLE_TYPE_ENUM type);
