@@ -60,7 +60,7 @@ struct SCOPE *pop_scope();
 // Certain AST_NODEs such as the literal token 'int' or 'str' needs to be converted from a NODE type to a VARIABLE type 'integer' or 'string'
 struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node);
 
-int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2);
+int are_arithmetically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2);
 
 int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2);
 

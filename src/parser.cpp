@@ -85,6 +85,7 @@ struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *pare
         node->statements.push_back(stmt);
     };
 
+    printf("ytttt    %s\n", status->current->literal_value.c_str());
     consume_assert(status, T_RBRACE, "Expected '}' but received '%s'", status->current->literal_value);
     return node;
 }
@@ -121,7 +122,7 @@ struct AST_NODE *parse_type(struct PARSER_STATUS *status, struct AST_NODE *paren
             type_node = array_node;
         }
     } else {
-        fprintf(stderr, "Expected type but received '%s'", status->current->literal_value);
+        fprintf(stderr, "Expected type but received '%s'", status->current->literal_value.c_str());
         exit(-1);
     }
 
@@ -192,6 +193,7 @@ struct AST_NODE *parse_argument(struct PARSER_STATUS *status, struct AST_NODE *n
 
     tmp_expr->vartype = tmp_type;
     node->args.push_back(tmp_expr);
+    return tmp_expr;
 }
 
 struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *parent)
@@ -217,10 +219,10 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
         // Body
         node->body = parse_block(status, node); // parse_block() consumes both '{' and '}'
-
         // Handle 'else' branches for 'if' statements
         if (node->type == A_IF && status->current->type == T_ELSE)
         {
+            consume(status);
             node->els = parse_block(status, node);
         }
 
@@ -319,6 +321,17 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
 
         consume(status);
         node->lhs = parse_expression(status, node);
+        break;
+    case T_CONTINUE:
+        node = make_node(status, A_CONTINUE, parent);
+        printf("Parsing\t::\tparse_statement\t::\tParsing Continue Statement\n");
+        consume(status);
+        break;
+
+    case T_BREAK:
+        node = make_node(status, A_BREAK, parent);
+        printf("Parsing\t::\tparse_statement\t::\tParsing Break Statement\n");
+        consume(status);
         break;
 
     default: // Defaults to expression, returns NULL if no valid expression could be constructed

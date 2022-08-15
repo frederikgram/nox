@@ -17,6 +17,8 @@ enum TOKEN_TYPE
     T_AND,
     T_AMP,
     T_MOD,
+    T_BREAK,
+    T_CONTINUE,
     T_ADD,
     T_SUB,
     T_DIV,

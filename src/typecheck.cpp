@@ -16,6 +16,7 @@ using namespace std;
 // Globals
 vector<struct SCOPE *> scopes;
 vector<struct VARIABLE *> functions;
+bool is_inside_loop = false;
 int scope_id = 0;
 
 // Constructs a new SCOPE and pushes it to the stack
@@ -203,7 +204,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         struct VARIABLE_TYPE * lhs = check_expression(expr->lhs);
         struct VARIABLE_TYPE * rhs = check_expression(expr->rhs);
 
-        if(are_arithmetiically_compatible(expr->type, lhs, rhs) == 0) {
+        if(are_arithmetically_compatible(expr->type, lhs, rhs) == 0) {
             fprintf(stderr,"Typechecking\t::\tcheck_expression\t::\tExpression is not arithmetically compatible\n");
             exit(-1);
         }
@@ -255,25 +256,8 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
         return var->type;
     }
 
-    case A_INDEX: {
-        printf("Typechecking\t::\tcheck_expression\t::\tExpression is an index\n");
-        struct VARIABLE_TYPE *array_type = check_expression(expr->lhs);
-        struct VARIABLE_TYPE *index_type = check_expression(expr->rhs);
 
-        if (array_type->type != V_ARRAY)
-        {
-            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tExpression is not an array\n");
-            exit(-1);
-        }
 
-        if (index_type->type != V_INTEGER)
-        {
-            fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tExpression is not an integer\n");
-            exit(-1);
-        }
-
-        return array_type->array_type;
-}
     default:
         fprintf(stderr, "Typechecking\t::\tcheck_expression\t::\tUnknown expression type %s\n", ast_node_type_to_string(expr->type));
         exit(-1);
@@ -293,6 +277,7 @@ void check_statement(struct AST_NODE *statement)
         break;
 
     case A_WHILE:
+        is_inside_loop = true;
     case A_IF: {
         // Ensure that the conditional expression is of type integer
         if (check_expression(statement->conditional)->type != V_INTEGER)
@@ -315,8 +300,19 @@ void check_statement(struct AST_NODE *statement)
             }
         }
 
+        is_inside_loop = false;
+
         break;
     }
+
+    case A_BREAK:
+    case A_CONTINUE:
+        if(is_inside_loop == false) {
+            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\t%s statement outside of loop\n", ast_node_type_to_string(statement->type));
+            exit(-1);
+        }
+        break;
+
     case A_FUNC_DEF: {
 
         // Build Function Variable
@@ -446,7 +442,7 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
     if (params.size() > 0)
     {
 
-        printf("Typechecking\t::\tcheck_block\t::\tInjecting %d variables into scope\n", params.size());
+        printf("Typechecking\t::\tcheck_block\t::\tInjecting %ld variables into scope\n", params.size());
 
         for (auto *param : params)
         {
@@ -469,4 +465,5 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 struct AST_NODE *typecheck(struct AST_NODE *root)
 {
     check_block(root, {});
+    return root;
 }

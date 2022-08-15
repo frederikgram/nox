@@ -70,6 +70,8 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
     {"while",T_WHILE},
     {"print",T_PRINT},
     {"return", T_RETURN},
+    {"break", T_BREAK},
+    {"continue", T_CONTINUE},
 
     // Types
     {"int",T_INT},
@@ -80,7 +82,7 @@ std::map<std::string, enum TOKEN_TYPE> keywords = {
 
 };
 
-std::map<std::string, enum TOKEN_TYPE> operators = {
+std::map<std::string, enum TOKEN_TYPE> compound_operators = {
 
     // Dual Character Operators
     {"==",T_EQ},
@@ -91,7 +93,9 @@ std::map<std::string, enum TOKEN_TYPE> operators = {
     {">=",T_GEQ},
     {"&&",T_LAND},
     {"||",T_LOR},
+};
 
+std::map<std::string, enum TOKEN_TYPE> single_operators = {
     // Single Character Operators @NOTE : We don't insert '/' here as it needs to be check for start-of-comment use before being able to assert if its an operator. 
     {"+",T_ADD},
     {"-",T_SUB},
@@ -100,6 +104,8 @@ std::map<std::string, enum TOKEN_TYPE> operators = {
     {"=",T_ASSIGN},
     {"!",T_BANG},
     {"&",T_AMP},
+    {"<", T_LESS},
+    {">", T_GREAT},
     {"|",T_PIPE},
     {".",T_DOT},
     {",",T_COMMA},
@@ -111,9 +117,7 @@ std::map<std::string, enum TOKEN_TYPE> operators = {
     {"{",T_LBRACE},
     {"}",T_RBRACE},
     {";",T_SEMICOLON},
-
 };
-
 
 struct TOKEN *lex(char *input, int size)
 {
@@ -126,17 +130,28 @@ struct TOKEN *lex(char *input, int size)
     while (cursor < size)
     {
 
-        // Check for both single-character and compound operators such as '+', '-', '==', and '&&'
-        for (auto it = operators.begin(); it != operators.end(); it++)
+        
+        // Check for both single-character and compound operators such as '==', and '&&'
+        if(cursor < size - 1) {
+            for (auto it = compound_operators.begin(); it != compound_operators.end(); it++)
+            {
+                if (cursor < size - 1 && input[cursor] == it->first[0] && input[cursor + 1] == it->first[1]){
+                    push(status, it->second, it->first.c_str(), 2);
+                    printf("yaaaaaaaaaaaaaaa %s\n", it->first.c_str());
+                    cursor += 1;
+                    // We only increment by one as breaking the loop will increment by one.
+                    break;
+                }
+            }
+        }
+
+
+        // Check for single-character operators such as '+', '-', '(', and ')'
+        for (auto it = single_operators.begin(); it != single_operators.end(); it++)
         {
-            if (cursor < size - 1 && it->first.length() == 2 && input[cursor] == it->first[0] && input[cursor + 1] == it->first[1]){
-                push(status, it->second, it->first.c_str(), 2);
-                cursor += 1;
-                // We only increment by one as breaking the loop will increment by one.
-                break;
-            } else if(input[cursor] == it->first[0]) {
+            if (input[cursor] == it->first[0])
+            {
                 push(status, it->second, it->first.c_str(), 1);
-                // We don't increment the cursor as breaking the loop will do that for us.
                 break;
             }
         }

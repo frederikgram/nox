@@ -18,6 +18,8 @@ enum AST_NODE_TYPE
     A_INT,
     A_LEQ,
     A_LOR,
+    A_CONTINUE,
+    A_BREAK,
     A_MUL,
     A_NEQ,
     A_NOT,

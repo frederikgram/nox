@@ -3,8 +3,6 @@
 
 using namespace std;
 
-
-
 // Converts _some_ enum TOKEN_TYPE's to enum AST_NODE_TYPE's
 enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
 {
@@ -16,6 +14,10 @@ enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
         return A_LESS;
     case T_ADDRESSOF:
         return A_ADDRESSOF;
+    case T_BREAK:
+        return A_BREAK;
+    case T_CONTINUE:
+        return A_CONTINUE;
     case T_DEREF:
         return A_DEREF;
     case T_VOID:
@@ -54,7 +56,7 @@ enum AST_NODE_TYPE token_type_to_node_type(enum TOKEN_TYPE type)
     }
 }
 
-char *ast_node_type_to_string(enum AST_NODE_TYPE type)
+const char *ast_node_type_to_string(enum AST_NODE_TYPE type)
 {
     switch (type)
     {
@@ -108,6 +110,10 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_STR";
     case A_CHAR:
         return "A_CHAR";
+    case A_BREAK:
+        return "A_BREAK";
+    case A_CONTINUE:
+        return "A_CONTINUE";
     
     default: {
         fprintf(stderr, "ast_node_type_to_string :: Missing Case\n");
@@ -116,7 +122,7 @@ char *ast_node_type_to_string(enum AST_NODE_TYPE type)
     }
 }
 
-char *variable_type_to_string(struct VARIABLE_TYPE *type)
+const char * variable_type_to_string(struct VARIABLE_TYPE *type)
 {
 
     switch (type->type)
