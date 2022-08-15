@@ -13,17 +13,19 @@
 #include <vector>
 using namespace std;
 
+// Globals
 vector<struct SCOPE *> scopes;
 vector<struct VARIABLE *> functions;
 int scope_id = 0;
 
+// Constructs a new SCOPE and pushes it to the stack
 void push_scope()
 {
     struct SCOPE *scope = new struct SCOPE;
     scope->id = scope_id++;
     scopes.push_back(scope);
 }
-
+// Pop the current scope and return it
 struct SCOPE *pop_scope()
 {
     struct SCOPE *scope = scopes.back();
@@ -64,7 +66,9 @@ struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node)
     }
 
 }
-int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
+
+// Checks if the two given types can be used in an arithmetic operation together  
+int are_arithmetically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
 {
   
     switch(type) {
@@ -98,6 +102,8 @@ int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE
     }
 
 }
+
+// Checks if the two given types can be used in a comparison operation together (Not including equality or inequality)
 int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2)
 {
     if (type1->type == V_INTEGER && type2->type == V_INTEGER)
@@ -111,6 +117,8 @@ int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYP
     else
         return 0;
 }
+
+// Checks if the two given types are equivalent (for structures this works differently, so check the function)
 int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
 {
     if (a == NULL && b == NULL)
@@ -127,12 +135,14 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
     return (a->type == b->type) && (are_equivalent_types(a->array_type, b->array_type)) &&
            (are_equivalent_types(a->pointer_to, b->pointer_to));
 }
+
+
 int is_literal(struct AST_NODE *node)
 {
     return node->type == A_INTEGER || node->type == A_STRING || node->type == A_CHARACTER;
 }
 
-// This function is used to check if a variable is declared in the current scope
+// Check if a variable is declared in the current scope and return it if it is
 struct VARIABLE * find_variable(std::string name)
 {
     for (int i = scopes.size() - 1; i >= 0; i--)
@@ -146,6 +156,7 @@ struct VARIABLE * find_variable(std::string name)
     return NULL;
 }
 
+// Return a VARIABLE_TYPE representing the return type of the expression if one is found
 struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
 {
     struct VARIABLE_TYPE *type = new struct VARIABLE_TYPE;
@@ -269,6 +280,7 @@ struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr)
     }
 }
 
+// Check if the child nodes of a statement and the statement structures itself are valid
 void check_statement(struct AST_NODE *statement)
 {
     printf("Typechecking\t::\tcheck_statement\t::\tChecking statement of type %s\n",
@@ -416,7 +428,7 @@ void check_statement(struct AST_NODE *statement)
     }
 }
 
-// Checks a block of statements, creating a new scope if necessary
+// Checks a block of statements, creating a new scope if necessary. If parameters are passed in, these are added to the new scope.
 void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 {
 
@@ -453,6 +465,7 @@ void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params)
 
 }
 
+// Entrypoint for typechecking
 struct AST_NODE *typecheck(struct AST_NODE *root)
 {
     check_block(root, {});

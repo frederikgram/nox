@@ -51,5 +51,29 @@ struct SCOPE
     int id;
 };
 
-struct AST_NODE *typecheck(struct AST_NODE *root);
+
+
+void push_scope();
+
+struct SCOPE *pop_scope();
+
+// Certain AST_NODEs such as the literal token 'int' or 'str' needs to be converted from a NODE type to a VARIABLE type 'integer' or 'string'
+struct VARIABLE_TYPE *get_type_from_subtree(struct AST_NODE *node);
+
+int are_arithmetiically_compatible(enum AST_NODE_TYPE type, struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2);
+
+int are_relationally_comparable(struct VARIABLE_TYPE *type1, struct VARIABLE_TYPE *type2);
+
+int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b);
+
+int is_literal(struct AST_NODE *node);
+// This function is used to check if a variable is declared in the current scope
+struct VARIABLE * find_variable(std::string name);
+
+struct VARIABLE_TYPE *check_expression(struct AST_NODE *expr);
+void check_statement(struct AST_NODE *statement);
+
+// Checks a block of statements, creating a new scope if necessary
 void check_block(struct AST_NODE *block, std::vector<struct VARIABLE *> params);
+
+struct AST_NODE *typecheck(struct AST_NODE *root);

@@ -1,3 +1,5 @@
+/**/
+
 #include "parser.hpp"
 #include "lexer.hpp"
 #include "utils.hpp"
@@ -620,8 +622,6 @@ struct AST_NODE *parse_expression(struct PARSER_STATUS *status, struct AST_NODE 
  * for the recursion */
 struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
 {
-
-
     // Initialization
     struct PARSER_STATUS *status = (struct PARSER_STATUS *)malloc(sizeof(struct PARSER_STATUS));
     struct AST_NODE *root = (struct AST_NODE *)malloc(sizeof(struct AST_NODE));
@@ -631,8 +631,7 @@ struct AST_NODE *parse(char *input, int size, struct TOKEN *head)
     status->input = input;
     status->input_size = size;
 
-
-
     status->root = parse_program(status, NULL);
+
     return status->root;
 }

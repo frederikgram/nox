@@ -3,7 +3,6 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "typecheck.hpp"
-#include "intermediate.hpp"
 #include "utils.hpp"
 #include <fstream>
 #include <stdio.h>
