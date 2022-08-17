@@ -6,12 +6,7 @@
 
 enum Operator {
 
-    O_JE,
-    O_JNE,
-    O_JG,
-    O_JL,
-    O_JGE,
-    O_JLE,
+    O_JMP_COND,
     O_JMP,
 
     O_ADD,
@@ -19,32 +14,37 @@ enum Operator {
     O_MUL,
     O_DIV,
     O_MOD,
+    
+    // Comparions
+    O_LEQ,
+    O_GEQ,
+    O_GREAT,
+    O_LESS,
+    O_EQ,
+    O_NEQ,
 
-    O_CMP,
-    O_CMPB,
-
-    O_ALLOC_STACK,
-    O_ALLOC_HEAP,
-    O_FREE_STACK,
-    O_FREE_HEAP,
-
+    // Memory
+    // @TODO : O_ALLOC_STACK,
+    // @TODO : O_ALLOC_HEAP,
+    // @TODO : O_FREE_STACK,
+    // @TODO : O_FREE_HEAP,
     O_LABEL,
-
     O_PUSH,
     O_POP,
     O_CALL,
-    O_RET,
+    // @TODO : O_RET,
     O_LEAQ,
 
     O_PRINT,
     // O_SCANF, @TODO : for when we get input working.
-
     O_WHILE,
     O_IF,
     O_ELSE,
 
-    O_INT_TO_FLOAT,
-    O_FLOAT_TO_INT,
+    O_FUNC,
+    O_STRING_DATA,
+    // @TODO : O_INT_TO_FLOAT,
+    // @TODO : O_FLOAT_TO_INT
     
 };
 
@@ -146,6 +146,7 @@ struct Operand {
     AddressingMode mode;
     enum VARIABLE_TYPE_ENUM type;
     int value;
+    std::string strval;
     int offset;
 };
 

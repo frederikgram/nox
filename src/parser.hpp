@@ -71,6 +71,7 @@ struct AST_NODE
     std::vector<struct AST_NODE *> statements;
 
     struct VARIABLE_TYPE * expression_type;
+    std::string label; // Used for keeping track of float and string labels in the x86 code
 
     struct SCOPE *scope;
 };

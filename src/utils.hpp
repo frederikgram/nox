@@ -11,3 +11,5 @@ const char *variable_type_to_string(struct VARIABLE_TYPE *type);
 enum VARIABLE_TYPE_ENUM ast_type_to_variable_type_enum(enum AST_NODE_TYPE type);
 
 enum Operator ast_node_type_to_operator(enum AST_NODE_TYPE type);
+std::string instruction_operator_to_string(enum Operator op);
+char * register_to_string(enum Register reg);

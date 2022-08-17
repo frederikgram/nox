@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -64,8 +65,19 @@ int main(int argc, char *argv[])
     printf("\n/* FINISHED TYPECHECKING */\n/* BEGINNING INTERMEDIATE CODE GENERATION */\n\n");
 
     std::vector<struct Instruction *> & instructions = generate_intermediate_representation(tree);
-
+    printf("\n/* FINISHED INTERMEDIATE CODE GENERATION */\n/* BEGINNING X86 ASSEMBLY GENERATION */\n\n");
     std::string output = emit(instructions);
+    printf("\n/* FINISHED X86 ASSEMBLY GENERATION */\n/* WRITING X86 TO FILE './output.s' */\n\n");
+    
+    fstream outfile;
+    outfile.open("output.s", std::ios_base::out);
+    if (!outfile.is_open()) {
+        std::cout << "failed to open " << "output.s" << '\n';
+    } else {
+        outfile.write(output.data(), output.size());
+        std::cout << "..." << endl;
+    }
+    printf("\n/* FINISHED WRITING X86 TO FILE */\n");
 
     fclose(fp);
     free(buffer);

@@ -2,3 +2,5 @@
 .clang-format
 .vscode
 nothing
+.out
+*.s

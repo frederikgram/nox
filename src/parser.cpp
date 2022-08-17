@@ -483,7 +483,7 @@ struct AST_NODE *parse_term(struct PARSER_STATUS *status, struct AST_NODE *paren
         consume(status);
         lhs->parent = p;
         p->lhs = lhs;
-        p->rhs = parse_term(status, p);
+        p->rhs = parse_factor(status, p);
         lhs = p;
     }
 
@@ -510,7 +510,7 @@ struct AST_NODE *parse_addititive(struct PARSER_STATUS *status, struct AST_NODE 
         consume(status);
         lhs->parent = p;
         p->lhs = lhs;
-        p->rhs = parse_addititive(status, p);
+        p->rhs = parse_term(status, p);
         lhs = p;
     }
 
@@ -539,7 +539,7 @@ struct AST_NODE *parse_relational(struct PARSER_STATUS *status, struct AST_NODE 
         consume(status);
         lhs->parent = p;
         p->lhs = lhs;
-        p->rhs = parse_relational(status, p);
+        p->rhs = parse_addititive(status, p);
         lhs = p;
     }
 
@@ -568,7 +568,7 @@ struct AST_NODE *parse_logical_and(struct PARSER_STATUS *status, struct AST_NODE
         consume(status);
         lhs->parent = p;
         p->lhs = lhs;
-        p->rhs = parse_logical_and(status, p);
+        p->rhs = parse_relational(status, p);
         lhs = p;
     }
 
@@ -596,7 +596,7 @@ struct AST_NODE *parse_logical_or(struct PARSER_STATUS *status, struct AST_NODE 
         consume(status);
         lhs->parent = p;
         p->lhs = lhs;
-        p->rhs = parse_logical_or(status, p);
+        p->rhs = parse_logical_and(status, p);
         lhs = p;
     }
 
