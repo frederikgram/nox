@@ -1,1 +1,1 @@
-build/intermediate.o: /dev/null
+build/main.o: /dev/null
