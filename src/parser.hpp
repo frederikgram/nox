@@ -16,6 +16,7 @@ enum AST_NODE_TYPE
     A_GEQ,
     A_INT,
     A_LEQ,
+    A_PROGRAM,
     A_LOR,
     A_CONTINUE,
     A_BREAK,

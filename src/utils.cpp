@@ -60,6 +60,10 @@ std::string instruction_operator_to_string(enum Operator op) {
         return "O_IF";
     case O_ELSE:
         return "O_ELSE";
+    case O_RET:
+        return "O_RET";
+    case O_MOV:
+        return "O_MOV";
   
     default:
         fprintf(stderr, "instruction_operator_to_string, unknown operator\n");
@@ -129,6 +133,8 @@ const char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_ARR";
     case A_DEREF:
         return "A_DEREF";
+    case A_PROGRAM:
+        return "A_PROGRAM";
     case A_ADDRESSOF:
         return "A_ADDRESSOF";
     case A_ARRAY:
@@ -185,6 +191,8 @@ const char *ast_node_type_to_string(enum AST_NODE_TYPE type)
         return "A_GREAT";
     case A_LEQ:
         return "A_LEQ";
+    case A_MOD:
+        return "A_MOD";
     case A_GEQ:
         return "A_GEQ";
     

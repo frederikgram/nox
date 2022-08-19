@@ -62,7 +62,7 @@ void consume_assert(struct PARSER_STATUS *status, enum TOKEN_TYPE type, const ch
 struct AST_NODE * parse_program(struct PARSER_STATUS *status, struct AST_NODE *parent)
 {
 
-    struct AST_NODE *node = make_node(status, A_BLOCK, parent);
+    struct AST_NODE *node = make_node(status, A_PROGRAM, parent);
     struct AST_NODE *stmt;
     while ((stmt = parse_statement(status, node)) != NULL)
     {
@@ -84,7 +84,6 @@ struct AST_NODE *parse_block(struct PARSER_STATUS *status, struct AST_NODE *pare
         node->statements.push_back(stmt);
     };
 
-    printf("ytttt    %s\n", status->current->literal_value.c_str());
     consume_assert(status, T_RBRACE, "Expected '}' but received '%s'", status->current->literal_value.c_str());
 
     return node;
@@ -423,11 +422,11 @@ struct AST_NODE *parse_factor(struct PARSER_STATUS *status, struct AST_NODE *par
             printf("parse_factor\t::\tFUNCTION_CALL\t::\t%s\n", status->current->literal_value.c_str());
             node = make_node(status, A_FUNC_CALL, parent);
             printf("parse_expression\t::\tFunction Call\t::\t%s\n", status->current->literal_value.c_str());
-
+            node->name = parse_identifier(status, node);
+            
             struct AST_NODE *vartype;
             struct AST_NODE *arg;
 
-            consume(status); // Consume the identifier
             consume(status); // Consume the '('
             while (status->current->type != T_RPARENS)
             {

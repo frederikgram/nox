@@ -73,10 +73,10 @@ std::string jump_instruction(struct Instruction * instruction) {
 
     switch(instruction->op) {
         case O_JMP:
-            result = "jge";
+            result = "\tjge";
             break;
         case O_JMP_COND:
-            result = "jmp";
+            result = "\tjmp";
             break;
         default:
             fprintf(stderr, "Emit\t::\tjump_instruction\t::\tUnhandled Jump instruction\n");
@@ -93,19 +93,25 @@ std::string simple_instruction(struct Instruction * instruction) {
 
     switch(instruction->op) {
         case O_ADD:
-            result = "addq";
+            result = "\taddq";
             break;
         case O_SUB:
-            result = "subq";
+            result = "\tsubq";
             break;
         case O_MUL:
-            result = "imulq";
+            result = "\timulq";
             break;
         case O_POP:
-            result = "popq";
+            result = "\tpopq";
             break;
         case O_PUSH:
-            result = "pushq";
+            result = "\tpushq";
+            break;
+        case O_MOV:
+            result = "\tmovq";
+            break;
+        case O_CALL:
+            result = "\tcall";
             break;
         default: 
             fprintf(stderr, "Emit\t::\tCannot find simple instruction for operator '%s'\n", instruction_operator_to_string(instruction->op).c_str());
@@ -126,29 +132,30 @@ std::string comparison_instruction(struct Instruction * instruction) {
 
     switch(instruction->op) {
         case O_EQ:
-            result += "\nsete %al\n";
+            result += "\n\tsete %al\n";
             break;
         case O_NEQ:
-            result += "\nsetne %al\n";
+            result += "\n\tsetne %al\n";
             break;
         case O_LEQ:
-            result += "\nsetle %al\n";
+            result += "\n\tsetle %al\n";
             break;
         case O_GEQ:
-            result += "\nsetge %al\n";
+            result += "\n\tsetge %al\n";
             break;
         case O_GREAT:
-            result += "\nsetg %al\n";
+            result += "\n\tsetg %al\n";
             break;
         case O_LESS:
-            result += "\nsetl %al\n";
+            result += "\n\tsetl %al\n";
             break;
+            
         default:
             fprintf(stderr, "Emit\t::\tcomparison_operator\t::\tUnhandled comparison operator\n");
             exit(-1);
     }
 
-    result += "movzbq %al , %rax\n";
+    result += "\tmovzbq %al , %rax\n";
     return result;
 }
 
@@ -218,33 +225,39 @@ std::string emit(std::vector<struct Instruction *> instructions) {
             printf("Emit\t::\tCreated Comparison Instruction\t::\t%s\n", instruction_operator_to_string(instruction->op).c_str());
             output += comparison_instruction(instruction);
             break;
+
+        case O_RET:
+            printf("Emit\t::\tCreated Return Instruction\n");
+            output += "\tret\n";
+            break;
         case O_ADD:
         case O_SUB:
         case O_POP:
         case O_MUL:
         case O_PUSH:
         case O_LEAQ:
+        case O_MOV:
         case O_CALL:
             printf("Emit\t::\tCreated Simple Instruction\t::\t%s\n", simple_instruction(instruction).c_str());
             output += simple_instruction(instruction);
             break;
         case O_DIV:
             printf("Emit\t::\tCreated Division Instruction\n");
-            output += "# PERFORMING DIVISION\n";
-            output += "popq %rbx # Popping first value into dividend\n";
-            output += "popq %rax # Popping second value into divider\n";
-            output += "cqo # sign extension\n";
-            output += "idivq %rbx # Carry out division\n";
-            output += "pushq %rax # Push result to stack\n";
+            output += "\t# PERFORMING DIVISION\n";
+            output += "\tpopq %rbx # Popping first value into dividend\n";
+            output += "\tpopq %rax # Popping second value into divider\n";
+            output += "\tcqo # sign extension\n";
+            output += "\tidivq %rbx # Carry out division\n";
+            output += "\tpushq %rax # Push result to stack\n";
             break;
         case O_MOD:
             printf("Emit\t::\tCreated Modulo Instruction\n");
-            output += "# PERFORMING MODULO OPERATION\n";
-            output += "popq %rbx # Popping first value into dividend\n";
-            output += "popq %rax # Popping second value into divider\n";
-            output += "cqo # sign extension\n";
-            output += "idivq %rbx # Carry out division\n";
-            output += "pushq %rdx # Push result to stack\n";
+            output += "\t# PERFORMING MODULO OPERATION\n";
+            output += "\tpopq %rbx # Popping first value into dividend\n";
+            output += "\tpopq %rax # Popping second value into divider\n";
+            output += "\tcqo # sign extension\n";
+            output += "\tidivq %rbx # Carry out division\n";
+            output += "\tpushq %rdx # Push result to stack\n";
             break;
         case O_LABEL:
             printf("Emit\t::\tInserted Label\t::\t%s\n", instruction->label.c_str());

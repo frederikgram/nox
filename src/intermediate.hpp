@@ -4,6 +4,8 @@
 #include "typecheck.hpp"
 #include <string.h>
 
+
+
 enum Operator {
 
     O_JMP_COND,
@@ -32,7 +34,8 @@ enum Operator {
     O_PUSH,
     O_POP,
     O_CALL,
-    // @TODO : O_RET,
+    O_MOV,
+    O_RET,
     O_LEAQ,
 
     O_PRINT,
@@ -159,6 +162,7 @@ struct Instruction {
     enum Register register1 = R_NULL;
     enum Register register2 = R_NULL;
     enum AddressingMode mode;
+    int value;
 
     std::string label;
     std::string comment;

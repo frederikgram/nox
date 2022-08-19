@@ -13,7 +13,8 @@
 #include <vector>
 
 // @TODO : We should probably do this without a global variable.
-static std::vector<struct Instruction *> instructions;
+static std::vector<std::vector<struct Instruction *>> instructions_stack;
+
 
 std::string get_label() {
 
@@ -22,12 +23,11 @@ std::string get_label() {
 }
 
 // Wrapper for instruction.push_back() to allow for logging information
-void push_instruction(struct Instruction * instruction) {
+static void push_instruction(struct Instruction * instruction) {
 
     printf("Intermediate\t::\tPushing Instruction\t::\t\"%s\"\n", instruction->comment.c_str());
-    instructions.push_back(instruction);
+    instructions_stack.back().push_back(instruction);
 }
-
 
 // Comparisons using compq and setXX instructions.
 void comparison_operator(enum Operator cmp_type, enum VARIABLE_TYPE_ENUM type) {
@@ -95,22 +95,42 @@ void arithmetic_operator(enum Operator op, enum VARIABLE_TYPE_ENUM type) {
     });
 }
 
+void setup_stack() {
+    push_instruction(new Instruction {
+        .op = O_PUSH,
+        .register1 = R_RBP,
+        .comment = "Push RBP",
+    });
+    push_instruction(new Instruction {
+        .op = O_MOV,
+        .register1 = R_RSP,
+        .register2 = R_RBP,
+        .comment = "Set RSP to RBP",
+    });
+}
+
+void return_from_function() {
+    push_instruction(new Instruction {
+        .op = O_POP,
+        .register1 = R_RBP,
+        .comment = "Pop RBP",
+    });
+    push_instruction(new Instruction {
+        .op = O_RET,
+    });
+}
 
 void generate_code(struct AST_NODE * node) {
 
     switch(node->type) {
-
-        case A_BLOCK: {
-
-            printf("Intermediate\t::\tGenerating code for block\n");
-
+    
+        case A_BLOCK:
+        case A_PROGRAM:
             // Generate code for each statement in the block
             for(auto stmt : node->statements) {
                 generate_code(stmt);
             }
-
             break;
-        }
 
         //@TODO : case A_MOD: 
         case A_ADD:
@@ -190,16 +210,61 @@ void generate_code(struct AST_NODE * node) {
                 .comment = (std::string) format_string("Push character %s to stack", node->token->literal_value.c_str()) // This should probably use node->token->value.charval instead
             });
             break;
+        
+        case A_FUNC_DEF: {
+            instructions_stack.push_back({});
             
+            // Make the function label
+            push_instruction(new Instruction {
+                .op = O_LABEL,
+                .label = node->name->token->value.strval,
+            });
+
+            // Push RBP set RSP to RBP
+            setup_stack();
+
+            // Generate code for the function body
+            generate_code(node->block);
+            
+            // Return from the function and pop RBP
+            return_from_function();
+
+            // Setup references to instruction stack elements
+            std::vector<struct Instruction *> & first = instructions_stack[0];
+            std::vector<struct Instruction *> & last = instructions_stack.back();
+
+            // Merge the instructions from the stack into the main instruction list
+            first.insert(first.begin(), last.begin(), last.end());
+            instructions_stack.pop_back();
+            break;
+        }
+
+        case A_FUNC_CALL:
+
+            printf("Intermediate\t::\tGenerating code for function call %s\n",  node->name->token->literal_value.c_str());
+            for(auto arg: node->args) {
+                // Generate code for the argument
+                generate_code(arg);
+            }
+            
+            push_instruction(new Instruction {
+                .op = O_CALL,
+                .label = node->name->token->literal_value,
+            });
+            break;
+
+        default: 
+            printf("\x1b[32m !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! default case hit in %s\x1b[0m\n", __FUNCTION__);
+            break;
 
     }
 }
 
+
 // Entry point for the intermediate code generator.
 std::vector<struct Instruction *> & generate_intermediate_representation(struct AST_NODE * root) {
-
-
+    instructions_stack.push_back({});
     generate_code(root);
-    return instructions;
+    return instructions_stack[0];
 }
 

@@ -280,6 +280,7 @@ void check_statement(struct AST_NODE *statement)
 
     switch (statement->type)
     {
+    case A_PROGRAM:
     case A_BLOCK:
         check_block(statement);
         break;
@@ -295,17 +296,11 @@ void check_statement(struct AST_NODE *statement)
         }
 
         // Check if all statements inside the block are valid, we don't use 'check_block' as it creates a new scope
-        for (auto stmt : statement->statements)
-        {
-            check_statement(stmt);
-        }
+        check_block(statement->body);
 
         // If there is an else statement, ensure all its statements are valid.
         if(statement->els != NULL) {
-            for (auto stmt : statement->els->statements)
-            {
-                check_statement(stmt);
-            }
+            check_block(statement->els);
         }
 
         is_inside_loop = false;
