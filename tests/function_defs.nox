@@ -1,11 +1,9 @@
 
-
 func int bar(){
     func int bazz(){}
 }
 func int foo() {
-    3+2;
-    5+12;
     bar();
-
 }
+foo();
+5+5;

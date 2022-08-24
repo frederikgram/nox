@@ -166,13 +166,11 @@ std::string x86_preamble(){
     std::string result = {};
 
     // This is split into separate lines to make it easier to read.
-    result += "\n# START OF PROGRAM PREAMBLE\n";
     result += "iform:\n.string \"%d\\n\"\n";
     result += "fform:\n.string \"%f\\n\"\n";
     result += "sform:\n.string \"%s\\n\"\n";
     result += "cform:\n.string \"%c\\n\"\n";
-    result += ".text\n.globl main\nmain:\n\n";
-    result += "# END OF PROGRAM PREAMBLE\n\n";
+    result += ".text\n.globl main\nmain: # Application Entrypoint\n";
     return result;    
 }
 

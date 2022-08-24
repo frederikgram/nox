@@ -42,7 +42,6 @@ int main(int argc, char *argv[])
     printf("/* BEGIN LEXING */\n\n");
     struct TOKEN *head = lex(buffer, lSize);
 
-
     if(head == NULL)
     {
         printf("/* LEXING RETURNED EMPTY */\n");

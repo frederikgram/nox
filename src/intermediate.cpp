@@ -12,9 +12,8 @@
 #include <string.h>
 #include <vector>
 
-// @TODO : We should probably do this without a global variable.
 static std::vector<std::vector<struct Instruction *>> instructions_stack;
-
+static std::vector<std::vector<struct Instruction *>> functions_stack;
 
 std::string get_label() {
 
@@ -61,7 +60,6 @@ void comparison_operator(enum Operator cmp_type, enum VARIABLE_TYPE_ENUM type) {
     });
 }
 
-
 // Arithmetic operators
 void arithmetic_operator(enum Operator op, enum VARIABLE_TYPE_ENUM type) {
 
@@ -95,6 +93,7 @@ void arithmetic_operator(enum Operator op, enum VARIABLE_TYPE_ENUM type) {
     });
 }
 
+// push RBP; mov RSP, RBP;
 void setup_stack() {
     push_instruction(new Instruction {
         .op = O_PUSH,
@@ -109,6 +108,7 @@ void setup_stack() {
     });
 }
 
+// pop RBP; ret;
 void return_from_function() {
     push_instruction(new Instruction {
         .op = O_POP,
@@ -126,6 +126,7 @@ void generate_code(struct AST_NODE * node) {
     
         case A_BLOCK:
         case A_PROGRAM:
+
             // Generate code for each statement in the block
             for(auto stmt : node->statements) {
                 generate_code(stmt);
@@ -152,7 +153,7 @@ void generate_code(struct AST_NODE * node) {
         case A_LESS:
         case A_GREAT:
         case A_LEQ:
-        case A_GEQ: {
+        case A_GEQ: 
 
             // Generate code for the left and right operands before the comparison
             generate_code(node->lhs);
@@ -161,12 +162,13 @@ void generate_code(struct AST_NODE * node) {
             printf("Intermediate\t::\tComparison operator %s\n", ast_node_type_to_string(node->type));
             comparison_operator(ast_node_type_to_operator(node->type), node->expression_type->type);
             break;
-}
+
         // String Literals
         case A_STRING: {
             std::string label = "ST_" + get_label();
             node->label = label;
 
+            // Add the string literal to the .data section
             push_instruction(new Instruction {
                 .op = O_STRING_DATA,
                 .operand1 = new Operand {
@@ -220,21 +222,21 @@ void generate_code(struct AST_NODE * node) {
                 .label = node->name->token->value.strval,
             });
 
-            // Push RBP set RSP to RBP
             setup_stack();
 
             // Generate code for the function body
             generate_code(node->block);
-            
-            // Return from the function and pop RBP
             return_from_function();
 
-            // Setup references to instruction stack elements
-            std::vector<struct Instruction *> & first = instructions_stack[0];
-            std::vector<struct Instruction *> & last = instructions_stack.back();
+            //std::vector<struct Instruction *> & first = instructions_stack[0];
+            //std::vector<struct Instruction *> & last = instructions_stack.back();
+//
+            //// Merge the instructions from the stack into the main instruction list
+            //first.insert(first.begin(), last.begin(), last.end());
+            //instructions_stack.pop_back();
 
-            // Merge the instructions from the stack into the main instruction list
-            first.insert(first.begin(), last.begin(), last.end());
+            std::vector<struct Instruction *> & current = instructions_stack.back();
+            functions_stack.push_back(current);
             instructions_stack.pop_back();
             break;
         }
@@ -265,6 +267,13 @@ void generate_code(struct AST_NODE * node) {
 std::vector<struct Instruction *> & generate_intermediate_representation(struct AST_NODE * root) {
     instructions_stack.push_back({});
     generate_code(root);
-    return instructions_stack[0];
+
+    //@TODO : Hack
+    for (auto func : functions_stack) {
+        instructions_stack[0].insert(instructions_stack[0].end(), func.begin(), func.end());
+    }
+    
+
+    return instructions_stack.back();
 }
 
