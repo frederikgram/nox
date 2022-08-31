@@ -341,19 +341,23 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         consume(status);
         break;
 
-    default: // Defaults to expression, returns NULL if no valid expression could be constructed
+    default: // Defaults to expression, returns NULL if no valid expression could be constructed, this is where variable assignments and function calls are handled
         node = parse_expression(status, parent);
-        if (node == NULL)
-        {
-            break;
-        }
+        if (node == NULL) { break; }
 
         // Check for Assignment Statement
-        if (node->type == A_IDENTIFIER && (status->current->type == T_COLON || status->current->type == T_ASSIGN))
-        {
+        if (node->type == A_IDENTIFIER && (status->current->type == T_COLON || status->current->type == T_ASSIGN)) {
             node = parse_assignment(status, node, parent);
+            break;
+
+        // Allow for dangling expressions if they are function calls
+        } else if (node->type == A_FUNC_CALL) { break; }
+
+        // Otherwise, error out.
+        else {
+            fprintf(stderr, "Expected an assignment or function call when making a dangling expression\n");
+            exit(-1);
         }
-        break;
     }
 
     // Consume the ';' at the end of the statement
