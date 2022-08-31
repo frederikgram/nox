@@ -10,6 +10,10 @@ enum Operator {
 
     O_JMP_COND,
     O_JMP,
+    O_JE,
+    O_JZ,
+    O_JNE,
+    O_JNZ,
 
     O_ADD,
     O_SUB,
@@ -24,12 +28,7 @@ enum Operator {
     O_LESS,
     O_EQ,
     O_NEQ,
-
-    // Memory
-    // @TODO : O_ALLOC_STACK,
-    // @TODO : O_ALLOC_HEAP,
-    // @TODO : O_FREE_STACK,
-    // @TODO : O_FREE_HEAP,
+    O_CMP,
     O_LABEL,
     O_PUSH,
     O_POP,
@@ -39,15 +38,12 @@ enum Operator {
     O_LEAQ,
 
     O_PRINT,
-    // O_SCANF, @TODO : for when we get input working.
     O_WHILE,
     O_IF,
     O_ELSE,
 
     O_FUNC,
     O_STRING_DATA,
-    // @TODO : O_INT_TO_FLOAT,
-    // @TODO : O_FLOAT_TO_INT
     
 };
 

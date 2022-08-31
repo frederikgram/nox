@@ -1,23 +1,13 @@
 
-// Integers
-5/5;
-a:int = 10+5;
-b:int = a - 15;
-c:int = 5 * a + b;
+// Basic Binary Arithmetic
+1+1;
+2-2;
+3*3;
+4/4;
+//@TODO : Module, 5%5;
 
-func int add(a: int, b: int) {
-    return a + b;
-}
+// Characters as integers are given their ASCII Value
+'a' < 'b';
 
-d:int = add(5, 10);
-e:int = add(5, add(5, 10)) * 2;
-
-// Characters
-f:char = 'a';
-g:char = 'b';
-fg:int = f < g; // Should return 1
-
-// Strings
-h:str = "hello";
-i:str = "world";
-j:str = h + " " + i; // Should return "hello world"
+// Strings can be concatenated by default.
+"hello" + "world";

@@ -1,9 +1,0 @@
-
-func int bar(){
-    func int bazz(){}
-}
-func int foo() {
-    bar();
-}
-foo();
-5+5;

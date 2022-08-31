@@ -1,8 +1,0 @@
-
-func int return_int() {}
-b: int;
-func int[] return_arr() {}
-d: int[];
-func int[][] return_mat() {}
-f: int[][];
-

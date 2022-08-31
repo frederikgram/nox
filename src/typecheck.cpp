@@ -137,7 +137,6 @@ int are_equivalent_types(struct VARIABLE_TYPE *a, struct VARIABLE_TYPE *b)
            (are_equivalent_types(a->pointer_to, b->pointer_to));
 }
 
-
 int is_literal(struct AST_NODE *node)
 {
     return node->type == A_INTEGER || node->type == A_STRING || node->type == A_CHARACTER;
@@ -378,11 +377,12 @@ void check_statement(struct AST_NODE *statement)
         break;
     }
     case A_PRINT:
-        if (check_expression(statement->lhs)->type != V_STRING)
-        {
-            fprintf(stderr,"Typechecking\t::\tcheck_statement\t::\tPrint statement is not a string\n");
+
+        if(statement->lhs->type != A_CHARACTER) {
+            printf("Typechecking\t::\tcheck_statement\t::\t'print()' currently only supports chars\n");
             exit(-1);
         }
+
         break;
 
     case A_ASSIGN: {

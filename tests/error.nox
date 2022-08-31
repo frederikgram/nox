@@ -1,5 +1,0 @@
-
-// This errors apparently... "Unkonwn expression type A_ASSIGN"
-//if(3 + 4 == 2) {
-//    print("Hello, world!");
-//}

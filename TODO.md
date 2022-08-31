@@ -1,4 +1,5 @@
 - Array Indexing
+- Tuples as return types and such
 - Addressof
 - Deref
 - Floating Points

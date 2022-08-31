@@ -31,6 +31,8 @@ static void push_instruction(struct Instruction * instruction) {
 // Comparisons using compq and setXX instructions.
 void comparison_operator(enum Operator cmp_type, enum VARIABLE_TYPE_ENUM type) {
     
+    printf("Intermediate\t::\tComparison Operator\t::\t\"%s\"\n", instruction_operator_to_string(cmp_type).c_str());
+
         // Pop the second operand from the stack
     push_instruction(new Instruction {
         .op = O_POP,
@@ -124,17 +126,16 @@ void generate_code(struct AST_NODE * node) {
 
     switch(node->type) {
     
-        case A_BLOCK:
-        case A_PROGRAM:
-
+        case A_BLOCK: {
             // Generate code for each statement in the block
             for(auto stmt : node->statements) {
                 generate_code(stmt);
             }
             break;
-
-        //@TODO : case A_MOD: 
-        case A_ADD:
+        }
+   
+        // Arithmetic operators
+        case A_ADD: 
         case A_SUB:
         case A_MUL:
         case A_DIV:
@@ -146,7 +147,7 @@ void generate_code(struct AST_NODE * node) {
             printf("Intermediate\t::\tGenerating code for arithmetic operator %s\n", ast_node_type_to_string(node->type));  
             arithmetic_operator(ast_node_type_to_operator(node->type), node->expression_type->type);
             break;
-
+        
         // Comparison operators
         case A_EQ:
         case A_NEQ:
@@ -185,10 +186,9 @@ void generate_code(struct AST_NODE * node) {
                 .comment = "Push string label to stack",
             });
             break;    
-        }  
-
+            }  
         // Integer Literals
-        case A_INTEGER: 
+        case A_INTEGER: {
             push_instruction(new Instruction {
                 .op = O_PUSH,
                 .operand1 = new Operand {
@@ -199,20 +199,166 @@ void generate_code(struct AST_NODE * node) {
                 .comment = "Push integer to stack",
             });
             break;
-
+}
         // Character Literals
-        case A_CHARACTER:
+        case A_CHARACTER: {
             push_instruction(new Instruction {
                 .op = O_PUSH,
                 .operand1 = new Operand {
                     .mode = AM_DIRECT,
                     .type = V_CHARACTER,
-                    .value = node->token->value.charval,
+                    .value = node->token->literal_value[1],
                 },
                 .comment = (std::string) format_string("Push character %s to stack", node->token->literal_value.c_str()) // This should probably use node->token->value.charval instead
             });
             break;
+        }
+    
+        case A_IF: {
+
+            printf("Intermediate\t::\tGenerating code for if statement\n");
+            
+            std::string label = get_label();
+
+            // Generate code for the condition
+            generate_code(node->conditional);
+            
+            if(node->els == NULL) {
+                push_instruction(new Instruction {
+                    .op = O_JNE,
+                    .label = "end_if_" + label,
+                    .comment = "Skip if condition is false",
+                });
+
+                // Generate code for the then statement
+                generate_code(node->body);
+
+            } else {
+
+                push_instruction(new Instruction {
+                    .op = O_CMP,
+                    .operand1 = new Operand {
+                        .mode = AM_DIRECT,
+                        .type = V_INTEGER,
+                        .value = 0,
+                    },
+                    .register2 = R_AL,
+                    
+                });
+
+                push_instruction(new Instruction {
+                    .op = O_JE,
+                    .label = "else_" + label,
+                    .comment = "Goto else statement if condition is false",
+                });
+
+                // Generate code for the then statement
+                generate_code(node->body);
+
+                // Goto the end of the if statement
+                push_instruction(new Instruction {
+                    .op = O_JMP,
+                    .label = "end_if_" + label,
+                    .comment = "Goto end of if statement",
+                });
+
+                // Insert a label for the else statement
+                push_instruction(new Instruction {
+                    .op = O_LABEL,
+                    .label = "else_" + label,
+                    .comment = "Start of else statement",
+                });
+
+                // Generate code for the else statement
+                generate_code(node->els);
+            }
+
+            // Insert a label for the end of the if statement
+            push_instruction(new Instruction {
+                    .op = O_LABEL,
+                    .label = "end_if_" + label,
+                    .comment = "End of if statement",
+                });
+            
+            break;
+        }
         
+        case A_WHILE: {
+                
+                printf("Intermediate\t::\tGenerating code for while statement\n");
+
+                std::string label = get_label();
+
+                // Insert a label for the start of the while statement
+                push_instruction(new Instruction {
+                    .op = O_LABEL,
+                    .label = "while_" + label,
+                    .comment = "Start of while statement",
+                });
+
+                // Generate code for the condition
+                generate_code(node->conditional);
+
+                push_instruction(new Instruction {
+                    .op = O_CMP,
+                    .operand1 = new Operand {
+                        .mode = AM_DIRECT,
+                        .type = V_INTEGER,
+                        .value = 0,
+                    },
+                    .register2 = R_AL,
+                    
+                });
+
+                // Jump to the end of the while statement if the condition is false
+                push_instruction(new Instruction {
+                    .op = O_JE,
+                    .label = "end_while_" + label,
+                    .comment = "Goto end of while statement if condition is false",
+                });
+
+                // Generate code for the body of the while statement
+                generate_code(node->body);
+
+                // Jump back to the start of the while statement
+                push_instruction(new Instruction {
+                    .op = O_JMP,
+                    .label = "while_" + label,
+                    .comment = "Goto start of while statement",
+                });
+
+                // Insert a label for the end of the while statement
+                push_instruction(new Instruction {
+                    .op = O_LABEL,
+                    .label = "end_while_" + label,
+                    .comment = "End of while statement",
+                });
+
+                break;
+
+        }
+      
+        // Main function
+        case A_PROGRAM:{
+            instructions_stack.push_back({});
+
+            // Make the function label
+            push_instruction(new Instruction {
+                .op = O_LABEL,
+                .label = "main",
+            });
+
+            // Generate code for the function body
+            for(auto stmt : node->statements) {
+                generate_code(stmt);
+            }
+
+            std::vector<struct Instruction *> & current = instructions_stack.back();
+            functions_stack.push_back(current);
+            instructions_stack.pop_back();
+            break;
+        }
+
         case A_FUNC_DEF: {
             instructions_stack.push_back({});
             
@@ -226,14 +372,8 @@ void generate_code(struct AST_NODE * node) {
 
             // Generate code for the function body
             generate_code(node->block);
-            return_from_function();
 
-            //std::vector<struct Instruction *> & first = instructions_stack[0];
-            //std::vector<struct Instruction *> & last = instructions_stack.back();
-//
-            //// Merge the instructions from the stack into the main instruction list
-            //first.insert(first.begin(), last.begin(), last.end());
-            //instructions_stack.pop_back();
+            return_from_function();
 
             std::vector<struct Instruction *> & current = instructions_stack.back();
             functions_stack.push_back(current);
@@ -244,19 +384,41 @@ void generate_code(struct AST_NODE * node) {
         case A_FUNC_CALL:
 
             printf("Intermediate\t::\tGenerating code for function call %s\n",  node->name->token->literal_value.c_str());
+
+            // Generate code for the argument
             for(auto arg: node->args) {
-                // Generate code for the argument
                 generate_code(arg);
             }
-            
+
+            // Call the function
             push_instruction(new Instruction {
                 .op = O_CALL,
                 .label = node->name->token->literal_value,
             });
             break;
 
+        //@TODO : Gotta figure out how we do return values since we're stack-only
+        case A_RETURN:
+            //generate_code(node->lhs);
+            break;
+
+        // @TODO : Print stuff pls
+        case A_PRINT: {
+            generate_code(node->lhs);
+
+            push_instruction(new Instruction {
+                .op = O_PRINT,
+                .operand1 = new Operand {
+                    .mode = AM_DIRECT,
+                    .type = ast_type_to_variable_type_enum(node->lhs->type),
+                },
+            });
+            break;
+        }
+
         default: 
             printf("\x1b[32m !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! default case hit in %s\x1b[0m\n", __FUNCTION__);
+            exit(-1);
             break;
 
     }
@@ -273,7 +435,6 @@ std::vector<struct Instruction *> & generate_intermediate_representation(struct 
         instructions_stack[0].insert(instructions_stack[0].end(), func.begin(), func.end());
     }
     
-
     return instructions_stack.back();
 }
 

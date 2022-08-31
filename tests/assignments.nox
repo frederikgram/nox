@@ -1,28 +1,8 @@
 
-// Integers
-func int return_int() {
-    return 1;
-}
+// Assigment and declaration
+a:int = 1;
+b:char = 'a';
+c:str = "hello";
 
-a: int = return_int();
-b: int;
-b = return_int();
-
-// Arrays
-func int[] return_arr() {
-    return [1, 2];
-}
-
-c: int[] = return_arr();
-d: int[];
-d = return_arr();
-
-// Matrices
-func int[][] return_mat() {
-    return [[1, 2], [3, 4]];
-}
-
-e: int[][] = return_mat();
-f: int[][];
-f = return_mat();
-
+d:int;
+d=1;

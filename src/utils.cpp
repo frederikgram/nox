@@ -36,6 +36,12 @@ std::string instruction_operator_to_string(enum Operator op) {
         return "O_GEW";
     case O_GREAT:
         return "O_GREAT";
+    case O_JE:
+        return "O_JE";
+    case O_JNE:
+        return "O_JNE";
+    case O_JZ:
+        return "O_JZ";
     case O_LESS:
         return "O_LESS";
     case O_EQ:
@@ -60,6 +66,8 @@ std::string instruction_operator_to_string(enum Operator op) {
         return "O_IF";
     case O_ELSE:
         return "O_ELSE";
+    case O_JNZ:
+        return "O_JNZ";
     case O_RET:
         return "O_RET";
     case O_MOV:

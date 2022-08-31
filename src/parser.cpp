@@ -172,6 +172,8 @@ struct AST_NODE *parse_assignment(struct PARSER_STATUS *status, struct AST_NODE 
         node->rhs = parse_expression(status, node);
     }
 
+    printf(",,, %s\n", node->lhs->token->literal_value.c_str());
+
     return node;
 }
 // Attempt to find either an identifier or a type-identifier pair
@@ -255,7 +257,7 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         node->vartype = parse_type(status, node);
         if (node->vartype == NULL)
         {
-            fprintf(stderr,"No type specified in function definition");
+            fprintf(stderr,"No type specified in function definition\n");
         }
 
         // Parse Function Name
@@ -266,7 +268,14 @@ struct AST_NODE *parse_statement(struct PARSER_STATUS *status, struct AST_NODE *
         if (node->name == NULL)
         {
             fprintf(stderr,
-                             "Expected an identifier in funcion definition");
+                             "Expected an identifier in funcion definition\n");
+        }
+
+        if(strncmp(node->name->token->literal_value.c_str(), "main", 4) == 0){
+            fprintf(stderr,
+                             "'main' is a reserved function name\n");
+
+            exit(-1);
         }
 
         // Parse Parameter Declarations
